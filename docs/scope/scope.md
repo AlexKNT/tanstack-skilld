@@ -65,14 +65,14 @@ spec [0002](../specs/0002-design-system/index.md) · code in `src/styles.css`, `
 Define the skill and owner shapes and where they live, with the read and write queries every later slice leans on.
 **Done when:** skills and owners are stored, typed end to end, and one server function can read the list and write a skill.
 - [x] Design it (spec): `/architect skill data model`
-- [ ] Build it: `/develop skill data model`
-  - [ ] Stand up the store: Drizzle, the connection, the `skills` table with its rules, and the inferred types (AC-1, AC-2, AC-7)
-  - [ ] Read path end to end: the bounded `listSkills` query and server function, plus the seed and a proven read (AC-3, AC-9)
-  - [ ] Write path end to end: the slug helper, the `createSkill` function reading the Clerk session, and the clash retry (AC-4, AC-5, AC-6)
-  - [ ] Failures and limits: explicit failure codes, field validation, and the description and link rules (AC-8)
-  - [ ] Prove it against a hosted Postgres with the connection string kept out of the repo (AC-10)
-- [ ] Verify it: `/check verify skill data model`
-spec [0003](../specs/0003-skill-data-model/index.md)
+- [x] Build it: `/develop skill data model`
+  - [x] Stand up the store: Drizzle, the connection, the `skills` table with its rules, and the inferred types (AC-1, AC-2, AC-7)
+  - [x] Read path end to end: the bounded `listSkills` query and server function, plus the seed and a proven read (AC-3, AC-9)
+  - [x] Write path end to end: the slug helper, the `createSkill` function reading the Clerk session, and the clash retry (AC-4, AC-5, AC-6)
+  - [x] Failures and limits: explicit failure codes, field validation, and the description and link rules (AC-8)
+  - [x] Prove it against a hosted Postgres with the connection string kept out of the repo (AC-10)
+- [x] Verify it: `/check verify skill data model`
+spec [0003](../specs/0003-skill-data-model/index.md) · code in `src/db/`, `src/features/skills/`, `scripts/seed.ts`, `drizzle/`, `drizzle.config.ts`
 
 ### 2. Skill catalogue · needs a decision
 The home list of skill cards and the detail page for a single skill, reading real data. This is the first real thread through UI, server, and store.
