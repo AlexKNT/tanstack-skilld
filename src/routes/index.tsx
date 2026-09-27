@@ -1,4 +1,5 @@
 import { Show, useClerk } from "@clerk/tanstack-react-start";
+import { usePostHog } from "@posthog/react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Button } from "#/components/ui/button";
@@ -22,6 +23,13 @@ export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
 	const { openSignUp } = useClerk();
+	const posthog = usePostHog();
+
+	const handleSignUp = () => {
+		posthog.capture("sign_up_started", { source: "home_hero" });
+		posthog.logger.info("sign-up dialog opened", { source: "home_hero" });
+		openSignUp();
+	};
 
 	return (
 		<main className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-24">
@@ -41,7 +49,7 @@ function Home() {
 
 				<div className="flex flex-wrap items-center gap-4">
 					<Show when="signed-out">
-						<Button size="lg" onClick={() => openSignUp()}>
+						<Button size="lg" onClick={handleSignUp}>
 							Create an account
 						</Button>
 					</Show>

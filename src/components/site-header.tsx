@@ -1,4 +1,5 @@
 import { Show, UserButton, useClerk } from "@clerk/tanstack-react-start";
+import { usePostHog } from "@posthog/react";
 import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
@@ -10,6 +11,19 @@ import { Button } from "#/components/ui/button";
  */
 export function SiteHeader() {
 	const { openSignIn, openSignUp } = useClerk();
+	const posthog = usePostHog();
+
+	const handleSignIn = () => {
+		posthog.capture("sign_in_started", { source: "header" });
+		posthog.logger.info("sign-in dialog opened", { source: "header" });
+		openSignIn();
+	};
+
+	const handleSignUp = () => {
+		posthog.capture("sign_up_started", { source: "header" });
+		posthog.logger.info("sign-up dialog opened", { source: "header" });
+		openSignUp();
+	};
 
 	return (
 		<header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-md">
@@ -24,10 +38,10 @@ export function SiteHeader() {
 
 				<div className="flex items-center gap-2">
 					<Show when="signed-out">
-						<Button variant="ghost" size="sm" onClick={() => openSignIn()}>
+						<Button variant="ghost" size="sm" onClick={handleSignIn}>
 							Sign in
 						</Button>
-						<Button size="sm" onClick={() => openSignUp()}>
+						<Button size="sm" onClick={handleSignUp}>
 							Sign up
 						</Button>
 					</Show>
