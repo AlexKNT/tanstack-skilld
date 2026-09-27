@@ -1,0 +1,36 @@
+# dependencies
+node_modules
+
+# build output
+dist
+dist-ssr
+.output
+.nitro
+.vinxi
+.wrangler
+.tanstack
+
+# environment variables (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+
+# logs, caches, and type build info
+*.log
+npm-debug.log*
+__unconfig*
+*.tsbuildinfo
+
+# test output
+coverage
+test-results
+playwright-report
+
+# editor and operating system files
+.DS_Store
+Thumbs.db
+.idea
+
+# local overrides and scratch
+*.local
+todos.json
