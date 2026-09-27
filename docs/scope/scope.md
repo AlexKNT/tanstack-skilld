@@ -50,12 +50,12 @@ code in `.husky/pre-commit`, `.github/workflows/ci.yml`
 Theme tokens, Tailwind CSS 4, and shadcn/ui are wired up, and only the button primitive exists so far.
 **Done when:** the primitives the catalogue needs exist and meet the accessibility baseline.
 - [x] Design it (spec): `/architect design system & UI foundation`
-- [ ] Build it: `/develop design system & UI foundation`
-  - [ ] Map the shadcn tokens onto the Skild palette and fix the two contrast failures (AC-1, AC-4, AC-6)
-  - [ ] Clean the styling layer: dead classes out, one `cn` helper (AC-7)
-  - [ ] Install the eight primitives: Card, Badge, Avatar, Separator, Skeleton, Empty, Alert, Spinner (AC-2, AC-3)
-  - [ ] Add the gallery route, then the visual and keyboard walk in both themes (AC-4, AC-5)
-  - [ ] Record the direction in `design.md` (AC-8)
+- [x] Build it: `/develop design system & UI foundation`
+  - [x] Map the shadcn tokens onto the Skild palette and fix the two contrast failures (AC-1, AC-4, AC-6)
+  - [x] Clean the styling layer: dead classes out, one `cn` helper (AC-7)
+  - [x] Install the eight primitives: Card, Badge, Avatar, Separator, Skeleton, Empty, Alert, Spinner (AC-2, AC-3)
+  - [x] Add the gallery route, then the visual and keyboard walk in both themes (AC-4, AC-5)
+  - [x] Record the direction in `design.md` (AC-8)
 - [ ] Verify they render and are keyboard reachable: `/check verify design system & UI foundation`
 spec [0002](../specs/0002-design-system/index.md) · code in `src/styles.css`, `src/components/ui/`, `src/routes/design.tsx`
 

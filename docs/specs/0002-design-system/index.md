@@ -1,7 +1,7 @@
 # 0002. Unify the design tokens on the Skild palette and add the catalogue primitives
 
 **Date**: 2026-09-27
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
