@@ -39,11 +39,12 @@ Clerk sign in, sign up, session middleware, and header controls, wired to the sh
 PostHog on the EU host, identifying the signed in user and capturing sign in and sign up intent. code in `src/routes/__root.tsx`
 
 ### D. Coding standards & tooling · in-progress
-Conventions are captured in `AGENTS.md`; the pre commit hook and the CI workflow are recorded there but not installed yet.
+Conventions are captured in `AGENTS.md`, and the pre commit hook and the CI workflow are now installed.
 **Done when:** lint, format, typecheck, and the test command all pass on a clean checkout, and a push runs them.
 - [x] Capture conventions + tooling choices: `/audit`
-- [ ] Install the tooling: `/develop tooling`
+- [x] Install the tooling: `/develop tooling`
 - [ ] Verify it runs clean: `/check verify tooling`
+code in `.husky/pre-commit`, `.github/workflows/ci.yml`
 
 ### E. Design system & UI foundation · in-progress
 Theme tokens, Tailwind CSS 4, and shadcn/ui are wired up, and only the button primitive exists so far.
