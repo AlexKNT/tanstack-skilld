@@ -272,10 +272,16 @@ a {
     transform 180ms ease;
 }
 
+/* The primitives carry animation from the registry (the spinner spins, the
+   skeleton pulses) and their class strings stay as the registry writes them, so
+   the guard lives here instead of in each file. */
 @media (prefers-reduced-motion: reduce) {
-  button,
-  a {
-    transition: none;
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
