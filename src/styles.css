@@ -11,7 +11,7 @@
   --sea-ink: #173a40;
   --sea-ink-soft: #416166;
   --lagoon: #4fb8b2;
-  --lagoon-deep: #328f97;
+  --lagoon-deep: #24747c;
   --palm: #2f6a4a;
   --sand: #e7f0e8;
   --foam: #f3faf5;
@@ -28,25 +28,32 @@
   --hero-a: rgba(79, 184, 178, 0.36);
   --hero-b: rgba(47, 106, 74, 0.2);
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.871 0.006 286.286);
+  /* The shadcn semantic tokens, pointed at the Skild palette rather than the
+     stock zinc values. Every pair here is measured against the surface it sits
+     on; the figures live in docs/specs/0002-design-system/index.md. */
+  --background: #ffffff;
+  --foreground: var(--sea-ink);
+  --card: var(--surface-strong);
+  --card-foreground: var(--sea-ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--sea-ink);
+  --primary: #24747c;
+  --primary-foreground: #ffffff;
+  --secondary: var(--sand);
+  --secondary-foreground: var(--sea-ink);
+  --muted: var(--sand);
+  --muted-foreground: var(--sea-ink-soft);
+  --accent: var(--sand);
+  --accent-foreground: var(--sea-ink);
+  --destructive: #c2261f;
+  --destructive-foreground: #ffffff;
+  --border: var(--line);
+  --input: #6b8580;
+  --ring: #328f97;
+  /* The one elevation step, lifted from the old .feature-card recipe. It lives
+     here, and in the dark block, so the two themes can swap it. */
+  --elevation-card: 0 1px 0 var(--inset-glint) inset, 0 18px 34px rgba(30, 90, 72, 0.1),
+    0 4px 14px rgba(23, 58, 64, 0.06);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -84,25 +91,29 @@
   --hero-a: rgba(96, 215, 207, 0.18);
   --hero-b: rgba(110, 200, 154, 0.12);
 
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.141 0.005 285.823);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.141 0.005 285.823);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.274 0.006 286.033);
-  --input: oklch(0.274 0.006 286.033);
-  --ring: oklch(0.442 0.017 285.786);
+  /* The same map, dark. Panels stay opaque and cards stay translucent, so text
+     never ghosts through a floating surface. */
+  --background: var(--bg-base);
+  --foreground: var(--sea-ink);
+  --card: var(--surface-strong);
+  --card-foreground: var(--sea-ink);
+  --popover: var(--foam);
+  --popover-foreground: var(--sea-ink);
+  --primary: #60d7cf;
+  --primary-foreground: var(--bg-base);
+  --secondary: var(--link-bg-hover);
+  --secondary-foreground: var(--sea-ink);
+  --muted: var(--link-bg-hover);
+  --muted-foreground: var(--sea-ink-soft);
+  --accent: var(--link-bg-hover);
+  --accent-foreground: var(--sea-ink);
+  --destructive: #f87171;
+  --destructive-foreground: #2a0f0d;
+  --border: var(--line);
+  --input: #4f7570;
+  --ring: #60d7cf;
+  --elevation-card: 0 1px 0 var(--inset-glint) inset, 0 18px 34px rgba(0, 0, 0, 0.45),
+    0 4px 14px rgba(0, 0, 0, 0.35);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -120,6 +131,7 @@
 
 @theme inline {
   --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -148,6 +160,12 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* The card elevation, also aliased as --shadow-sm because that is the class
+     the registry Card already ships, so no registry file is edited for depth.
+     A theme token cannot reference itself by name, which is why the theme aware
+     value sits on --elevation-card. */
+  --shadow-card: var(--elevation-card);
+  --shadow-sm: var(--elevation-card);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -208,13 +226,14 @@ body::after {
 
 a {
   color: var(--lagoon-deep);
-  text-decoration-color: rgba(50, 143, 151, 0.4);
+  /* Derived from the link colour, so the underline cannot drift away from it. */
+  text-decoration-color: color-mix(in oklab, var(--lagoon-deep) 40%, transparent);
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
 
 a:hover {
-  color: #246f76;
+  color: #1f6a72;
 }
 
 code {
@@ -241,105 +260,30 @@ pre code {
   color: #e8efff;
 }
 
-.page-wrap {
-  width: min(1080px, calc(100% - 2rem));
-  margin-inline: auto;
-}
-
-.display-title {
-  font-family: 'Fraunces', Georgia, serif;
-}
-
-.island-shell {
-  border: 1px solid var(--line);
-  background: linear-gradient(165deg, var(--surface-strong), var(--surface));
-  box-shadow:
-    0 1px 0 var(--inset-glint) inset,
-    0 22px 44px rgba(30, 90, 72, 0.1),
-    0 6px 18px rgba(23, 58, 64, 0.08);
-  backdrop-filter: blur(4px);
-}
-
-.feature-card {
-  background: linear-gradient(165deg, color-mix(in oklab, var(--surface-strong) 93%, white 7%), var(--surface));
-  box-shadow:
-    0 1px 0 var(--inset-glint) inset,
-    0 18px 34px rgba(30, 90, 72, 0.1),
-    0 4px 14px rgba(23, 58, 64, 0.06);
-}
-
-.feature-card:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in oklab, var(--lagoon-deep) 35%, var(--line));
-}
+/* The old component class layer (.page-wrap, .display-title, .island-shell,
+   .island-kicker, .feature-card, .nav-link, .rise-in, .site-footer) is gone:
+   nothing referenced it, and every shipped surface is styled with utilities.
+   The one value worth keeping, the feature card shadow, is now the
+   --elevation-card token above. */
 
 button,
-.island-shell,
 a {
   transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease,
     transform 180ms ease;
 }
 
-.island-kicker {
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-size: 0.69rem;
-  color: var(--kicker);
-}
-
-.nav-link {
-  position: relative;
-  text-decoration: none;
-  color: var(--sea-ink-soft);
-}
-
-.nav-link::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -8px;
-  width: 100%;
-  height: 2px;
-  transform: scaleX(0);
-  transform-origin: left;
-  background: linear-gradient(90deg, var(--lagoon), #7ed3bf);
-  transition: transform 170ms ease;
-}
-
-.nav-link:hover,
-.nav-link.is-active {
-  color: var(--sea-ink);
-}
-
-.nav-link:hover::after,
-.nav-link.is-active::after {
-  transform: scaleX(1);
-}
-
-.rise-in {
-  animation: rise-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+@media (prefers-reduced-motion: reduce) {
+  button,
+  a {
+    transition: none;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.site-footer {
-  border-top: 1px solid var(--line);
-  background: color-mix(in oklab, var(--header-bg) 84%, transparent 16%);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    /* Full strength, never outline-ring/50: a half strength ring measures
+       1.84:1 on white and a focus indicator has to clear 3:1. */
+    @apply border-border outline-ring;
   }
   body {
     background-color: var(--background);

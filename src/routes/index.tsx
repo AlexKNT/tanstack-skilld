@@ -38,7 +38,7 @@ function Home() {
 					TanStack Start learning build
 				</span>
 
-				<h1 className="max-w-2xl text-balance font-[Fraunces] text-4xl leading-tight font-bold sm:text-6xl">
+				<h1 className="max-w-2xl text-balance font-display text-4xl leading-tight font-bold sm:text-6xl">
 					Discover and share AI agent skills
 				</h1>
 
