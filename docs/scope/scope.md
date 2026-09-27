@@ -56,7 +56,7 @@ Theme tokens, Tailwind CSS 4, and shadcn/ui are wired up, and only the button pr
   - [x] Install the eight primitives: Card, Badge, Avatar, Separator, Skeleton, Empty, Alert, Spinner (AC-2, AC-3)
   - [x] Add the gallery route, then the visual and keyboard walk in both themes (AC-4, AC-5)
   - [x] Record the direction in `design.md` (AC-8)
-- [ ] Verify they render and are keyboard reachable: `/check verify design system & UI foundation`
+- [x] Verify they render and are keyboard reachable: `/check verify design system & UI foundation`
 spec [0002](../specs/0002-design-system/index.md) · code in `src/styles.css`, `src/components/ui/`, `src/routes/design.tsx`
 
 ## Slice 1: Read the catalogue on real data

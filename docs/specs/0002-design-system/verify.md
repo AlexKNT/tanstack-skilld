@@ -6,34 +6,34 @@ _Steps derived from spec 0002 acceptance criteria. `/check verify` runs these; `
 
 **The tokens reach the app**
 
-- [ ] Visit `/` → the header's primary button is the deeper teal, not near black, and its label is white → AC-1
-- [ ] From the header, open Sign up → the dialog's primary button is the same teal with white text, and its footer link is the same teal → AC-1
-- [ ] Visit `/design` → a Light theme panel and a Dark theme panel each list Card, Badge, Avatar, Separator, Skeleton, Empty, Alert and Spinner, in that order → AC-2, AC-3
-- [ ] In each panel, look at the Avatar block → the first avatar shows a picture and the second shows the initials SK, with no image and no broken image icon → AC-2
-- [ ] In each panel, look at the Skeleton block → four placeholder bars render inside a card → AC-3
-- [ ] In each panel, look at the Empty block → an icon, a title, a description and a Publish a skill button render inside a dashed border → AC-3
-- [ ] In each panel, look at the Alert block → a default callout and a red error callout both render, each with an icon, a title and a body → AC-3
-- [ ] In each panel, look at the Spinner block → a bare spinner sits beside its label, and a disabled Publishing button carries a second spinner → AC-3
+- [x] Visit `/` → the header's primary button is the deeper teal, not near black, and its label is white → AC-1
+- [x] From the header, open Sign up → the dialog's primary button is the same teal with white text, and its footer link is the same teal → AC-1
+- [x] Visit `/design` → a Light theme panel and a Dark theme panel each list Card, Badge, Avatar, Separator, Skeleton, Empty, Alert and Spinner, in that order → AC-2, AC-3
+- [x] In each panel, look at the Avatar block → the first avatar shows a picture and the second shows the initials SK, with no image and no broken image icon → AC-2
+- [x] In each panel, look at the Skeleton block → four placeholder bars render inside a card → AC-3
+- [x] In each panel, look at the Empty block → an icon, a title, a description and a Publish a skill button render inside a dashed border → AC-3
+- [x] In each panel, look at the Alert block → a default callout and a red error callout both render, each with an icon, a title and a body → AC-3
+- [x] In each panel, look at the Spinner block → a bare spinner sits beside its label, and a disabled Publishing button carries a second spinner → AC-3
 
 **Both themes**
 
-- [ ] On `/design`, compare the two panels → the dark one is a dark surface and every primitive in it renders on dark values with legible text → AC-4
-- [ ] On `/design`, open the browser console → no errors and no hydration warnings, only the pre existing Clerk development key warning → AC-3
+- [x] On `/design`, compare the two panels → the dark one is a dark surface and every primitive in it renders on dark values with legible text → AC-4
+- [x] On `/design`, open the browser console → no errors and no hydration warnings, only the pre existing Clerk development key warning → AC-3
 
 **Keyboard and focus**
 
-- [ ] On `/design`, press Tab from the top of the page → focus moves in reading order: the header link, the two header buttons, then Open, Save, the linked badge and Publish a skill in the light panel, then the same in the dark panel. The disabled Publishing button is skipped → AC-5
-- [ ] While tabbing, check each stop → it shows a visible ring, about 3 px, drawn at full strength with no fade. Deeper teal on the light surface, light teal on the dark one → AC-5
+- [x] On `/design`, press Tab from the top of the page → focus moves in reading order: the header link, the two header buttons, then Open, Save, the linked badge and Publish a skill in the light panel, then the same in the dark panel. The disabled Publishing button is skipped → AC-5
+- [x] While tabbing, check each stop → it shows a visible ring, about 3 px, drawn at full strength with no fade. Deeper teal on the light surface, light teal on the dark one → AC-5
 
 **The gallery's own rule**
 
-- [ ] `npm run build` then `npm run preview`, and visit `/design` → the page shows the short line saying it is a development reference, not the gallery → spec 0002 gallery route
+- [x] `npm run build` then `npm run preview`, and visit `/design` → the page shows the short line saying it is a development reference, not the gallery → spec 0002 gallery route
 
 ## Value sourcing (one per row of the spec's table)
 
-- [ ] Edit `--primary` in `src/styles.css` → every button and badge follows, no component edited. Revert → AC-1
-- [ ] Edit `--elevation-card` in the light block → the card's shadow follows, and no registry file is edited. Revert → AC-1
-- [ ] Edit `--ring` to a lighter teal → the focus ring follows and stays solid at full strength. Revert → AC-5
+- [x] Edit `--primary` in `src/styles.css` → every button and badge follows, no component edited. Revert → AC-1
+- [x] Edit `--elevation-card` in the light block → the card's shadow follows, and no registry file is edited. Revert → AC-1
+- [x] Edit `--ring` to a lighter teal → the focus ring follows and stays solid at full strength. Revert → AC-5
 - [ ] Edit the card's title and body words in `src/routes/design.tsx` → the card shows exactly those words, since the primitive ships none → AC-2
 - [ ] Point one `AvatarImage` `src` at a path that does not exist → the initials fallback appears in place of the broken image. Restore → AC-2
 - [ ] Change a Badge's child text → the badge shows the new text and nothing else → AC-2
@@ -44,13 +44,13 @@ _Steps derived from spec 0002 acceptance criteria. `/check verify` runs these; `
 
 ## Commands
 
-- [ ] `npm run check` → Biome reports no errors or fixes → AC-7
-- [ ] `npm run typecheck` → `tsc --noEmit` exits clean → AC-7
-- [ ] `npm run build` → the production build completes → AC-7
-- [ ] `grep -rn 'from "cn"' src` → no matches, and `cn` is not in `package.json` dependencies → AC-7
+- [x] `npm run check` → Biome reports no errors or fixes → AC-7
+- [x] `npm run typecheck` → `tsc --noEmit` exits clean → AC-7
+- [x] `npm run build` → the production build completes → AC-7
+- [x] `grep -rn 'from "cn"' src` → no matches, and `cn` is not in `package.json` dependencies → AC-7
 - [ ] `grep -rn 'page-wrap\|display-title\|island-shell\|island-kicker\|feature-card\|nav-link\|rise-in\|site-footer' src` → no matches → AC-7
-- [ ] `grep -rn '#[0-9a-fA-F]\{3,8\}\|bg-\[\|text-\[\|oklch(' src/components/ui` → no matches, so no colour is written inside a component → AC-4
-- [ ] Confirm `design.md` exists at the repo root, holds the character, the build mandate and the composition rules, and points at `src/styles.css` for the values → AC-8
+- [x] `grep -rn '#[0-9a-fA-F]\{3,8\}\|bg-\[\|text-\[\|oklch(' src/components/ui` → no matches, so no colour is written inside a component → AC-4
+- [x] Confirm `design.md` exists at the repo root, holds the character, the build mandate and the composition rules, and points at `src/styles.css` for the values → AC-8
 
 ## Acceptance-criteria coverage
 
