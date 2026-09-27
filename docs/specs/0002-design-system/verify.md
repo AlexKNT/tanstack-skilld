@@ -34,13 +34,13 @@ _Steps derived from spec 0002 acceptance criteria. `/check verify` runs these; `
 - [x] Edit `--primary` in `src/styles.css` → every button and badge follows, no component edited. Revert → AC-1
 - [x] Edit `--elevation-card` in the light block → the card's shadow follows, and no registry file is edited. Revert → AC-1
 - [x] Edit `--ring` to a lighter teal → the focus ring follows and stays solid at full strength. Revert → AC-5
-- [ ] Edit the card's title and body words in `src/routes/design.tsx` → the card shows exactly those words, since the primitive ships none → AC-2
-- [ ] Point one `AvatarImage` `src` at a path that does not exist → the initials fallback appears in place of the broken image. Restore → AC-2
-- [ ] Change a Badge's child text → the badge shows the new text and nothing else → AC-2
-- [ ] Change the Empty block's title, description and action → the primitive follows, since it ships no product strings of its own → AC-3
-- [ ] Change the gallery skeletons' `className` widths → the bars follow, nothing about their shape is baked in → AC-3
-- [ ] Pass `className="size-6"` to a Spinner → it grows; the primitive's own size variant is what governs → AC-3
-- [ ] Change the Alert title and body → the alert shows the new wording → AC-3
+- [x] Edit the card's title and body words in `src/routes/design.tsx` → the card shows exactly those words, since the primitive ships none → AC-2
+- [x] Point one `AvatarImage` `src` at a path that does not exist → the initials fallback appears in place of the broken image. Restore → AC-2
+- [x] Change a Badge's child text → the badge shows the new text and nothing else → AC-2
+- [x] Change the Empty block's title, description and action → the primitive follows, since it ships no product strings of its own → AC-3
+- [x] Change the gallery skeletons' `className` widths → the bars follow, nothing about their shape is baked in → AC-3
+- [x] Pass `className="size-6"` to a Spinner → it grows; the primitive's own size variant is what governs → AC-3
+- [x] Change the Alert title and body → the alert shows the new wording → AC-3
 
 ## Commands
 
@@ -48,7 +48,7 @@ _Steps derived from spec 0002 acceptance criteria. `/check verify` runs these; `
 - [x] `npm run typecheck` → `tsc --noEmit` exits clean → AC-7
 - [x] `npm run build` → the production build completes → AC-7
 - [x] `grep -rn 'from "cn"' src` → no matches, and `cn` is not in `package.json` dependencies → AC-7
-- [ ] `grep -rn 'page-wrap\|display-title\|island-shell\|island-kicker\|feature-card\|nav-link\|rise-in\|site-footer' src` → no matches → AC-7
+- [x] `grep -rn 'page-wrap\|display-title\|island-shell\|island-kicker\|feature-card\|nav-link\|rise-in\|site-footer' src` → no matches → AC-7
 - [x] `grep -rn '#[0-9a-fA-F]\{3,8\}\|bg-\[\|text-\[\|oklch(' src/components/ui` → no matches, so no colour is written inside a component → AC-4
 - [x] Confirm `design.md` exists at the repo root, holds the character, the build mandate and the composition rules, and points at `src/styles.css` for the values → AC-8
 

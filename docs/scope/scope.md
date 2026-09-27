@@ -15,8 +15,8 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | B | Authentication & accounts | Foundation | existing |
 | C | Product analytics | Foundation | existing |
 | D | Coding standards & tooling | Foundation | done |
-| E | Design system & UI foundation | Foundation | in-progress |
-| 1 | Skill data model | Slice 1 | planned |
+| E | Design system & UI foundation | Foundation | done |
+| 1 | Skill data model | Slice 1 | in-progress |
 | 2 | Skill catalogue | Slice 1 | planned |
 | 3 | Publish a skill | Slice 2 | planned |
 | 4 | Signed in area | Slice 3 | planned |
@@ -46,7 +46,7 @@ Conventions are captured in `AGENTS.md`, and the pre commit hook and the CI work
 - [x] Verify it runs clean: `/check verify tooling`
 code in `.husky/pre-commit`, `.github/workflows/ci.yml`
 
-### E. Design system & UI foundation · in-progress
+### E. Design system & UI foundation · done
 Theme tokens, Tailwind CSS 4, and shadcn/ui are wired up, and only the button primitive exists so far.
 **Done when:** the primitives the catalogue needs exist and meet the accessibility baseline.
 - [x] Design it (spec): `/architect design system & UI foundation`
@@ -61,10 +61,18 @@ spec [0002](../specs/0002-design-system/index.md) · code in `src/styles.css`, `
 
 ## Slice 1: Read the catalogue on real data
 
-### 1. Skill data model · needs a decision
+### 1. Skill data model · in-progress
 Define the skill and owner shapes and where they live, with the read and write queries every later slice leans on.
 **Done when:** skills and owners are stored, typed end to end, and one server function can read the list and write a skill.
-- [ ] Design it (spec): `/architect skill data model`
+- [x] Design it (spec): `/architect skill data model`
+- [ ] Build it: `/develop skill data model`
+  - [ ] Stand up the store: Drizzle, the connection, the `skills` table with its rules, and the inferred types (AC-1, AC-2, AC-7)
+  - [ ] Read path end to end: the bounded `listSkills` query and server function, plus the seed and a proven read (AC-3, AC-9)
+  - [ ] Write path end to end: the slug helper, the `createSkill` function reading the Clerk session, and the clash retry (AC-4, AC-5, AC-6)
+  - [ ] Failures and limits: explicit failure codes, field validation, and the description and link rules (AC-8)
+  - [ ] Prove it against a hosted Postgres with the connection string kept out of the repo (AC-10)
+- [ ] Verify it: `/check verify skill data model`
+spec [0003](../specs/0003-skill-data-model/index.md)
 
 ### 2. Skill catalogue · needs a decision
 The home list of skill cards and the detail page for a single skill, reading real data. This is the first real thread through UI, server, and store.
