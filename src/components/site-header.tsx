@@ -46,6 +46,9 @@ export function SiteHeader() {
 						</Button>
 					</Show>
 					<Show when="signed-in">
+						<Button asChild size="sm" variant="ghost">
+							<Link to="/skills/new">Publish a skill</Link>
+						</Button>
 						<UserButton />
 					</Show>
 				</div>

@@ -18,7 +18,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | E | Design system & UI foundation | Foundation | done |
 | 1 | Skill data model | Slice 1 | in-progress |
 | 2 | Skill catalogue | Slice 1 | in-progress |
-| 3 | Publish a skill | Slice 2 | planned |
+| 3 | Publish a skill | Slice 2 | done |
 | 4 | Signed in area | Slice 3 | planned |
 | 5 | Upvotes | Slice 4 | planned |
 | 6 | Search and filter | Slice 5 | planned |
@@ -89,10 +89,18 @@ spec [0004](../specs/0004-skill-catalogue/index.md) · code in `src/features/ski
 
 ## Slice 2: Contribute
 
-### 3. Publish a skill · needs a decision
+### 3. Publish a skill · done
 A signed in user adds a skill through a form, and it shows up in the catalogue.
 **Done when:** a signed in user can submit a valid skill, see it in the catalogue, and gets clear field level errors for invalid input.
-- [ ] Design it (spec): `/architect publish a skill`
+- [x] Design it (spec): `/architect publish a skill`
+- [x] Build it: `/develop publish a skill`
+  - [x] Route shell and the thin thread: `/skills/new` renders the form, and a controlled submit reaches `createSkill` and returns (AC-1, AC-3, AC-10)
+  - [x] Success path and the guard: invalidate the catalogue then redirect to the new detail page, and guard the route on the server with the return path preserved (AC-3, AC-4, AC-2)
+  - [x] Field errors, hints and the states: the labelled field wrapper, `fieldErrors` from the server result, the announced message, the hints from the shared constants, and the failure and pending states (AC-5, AC-6, AC-7, AC-9)
+  - [x] Entry point and analytics: the header publish button and the two PostHog events in the fixed order (AC-1, AC-8)
+  - [x] Accessibility pass and the boundary check: labels, focus, heading order, 320px, and no schema change (AC-9, AC-11)
+- [x] Verify it: `/check verify publish a skill`
+spec [0005](../specs/0005-publish-a-skill/index.md) · code in `src/routes/skills.new.tsx`, `src/features/skills/auth.ts`, `src/features/skills/components/publish-skill-form.tsx`, `src/features/skills/components/publish-form-field.tsx`, `src/components/site-header.tsx`, `src/routes/sign-in.$.tsx`
 
 ## Slice 3: Your own space
 
