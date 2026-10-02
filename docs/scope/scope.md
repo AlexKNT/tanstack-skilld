@@ -17,7 +17,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | D | Coding standards & tooling | Foundation | done |
 | E | Design system & UI foundation | Foundation | done |
 | 1 | Skill data model | Slice 1 | in-progress |
-| 2 | Skill catalogue | Slice 1 | planned |
+| 2 | Skill catalogue | Slice 1 | in-progress |
 | 3 | Publish a skill | Slice 2 | planned |
 | 4 | Signed in area | Slice 3 | planned |
 | 5 | Upvotes | Slice 4 | planned |
@@ -74,10 +74,18 @@ Define the skill and owner shapes and where they live, with the read and write q
 - [x] Verify it: `/check verify skill data model`
 spec [0003](../specs/0003-skill-data-model/index.md) · code in `src/db/`, `src/features/skills/`, `scripts/seed.ts`, `drizzle/`, `drizzle.config.ts`
 
-### 2. Skill catalogue · needs a decision
+### 2. Skill catalogue · in-progress
 The home list of skill cards and the detail page for a single skill, reading real data. This is the first real thread through UI, server, and store.
 **Done when:** the home page lists skills from the store with loading, empty, and error states, and a card opens a detail page at its own URL.
-- [ ] Design it (spec): `/architect skill catalogue`
+- [x] Design it (spec): `/architect skill catalogue`
+- [x] Build it: `/develop skill catalogue`
+  - [x] Read layer and the two public server functions (AC-6, AC-10)
+  - [x] Thin thread: the home list and the detail route on real data (AC-1, AC-4)
+  - [x] Cards, publishers and the sanitized markdown body (AC-1, AC-2, AC-3, AC-4, AC-5, AC-9, AC-11)
+  - [x] Load more paging and the loading, empty and error states (AC-7, AC-8, AC-12)
+  - [x] The 404 path, the accessibility pass and the boundary check (AC-6, AC-11, AC-13)
+- [x] Verify it: `/check verify skill catalogue`
+spec [0004](../specs/0004-skill-catalogue/index.md) · code in `src/features/skills/`, `src/routes/index.tsx`, `src/routes/skills.$slug.tsx`
 
 ## Slice 2: Contribute
 

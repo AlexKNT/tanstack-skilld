@@ -1,4 +1,5 @@
 import { fail, ok, type Result } from "#/db/result";
+import { MAX_SLUG_LENGTH } from "./slug";
 
 /** The failure codes a skill write can return, decided in spec 0003. */
 export type SkillFailureCode =
@@ -6,9 +7,14 @@ export type SkillFailureCode =
 	| "VALIDATION_FAILED"
 	| "SKILLS_WRITE_FAILED";
 
-/** The failure codes a skill read can return, decided in spec 0003. */
-export type SkillsQueryFailureCode =
+/**
+ * The failure codes a skill read can return: spec 0003's two, plus the not
+ * found case the catalogue's detail page needs to tell apart from a broken
+ * read, decided in spec 0004.
+ */
+export type SkillReadFailureCode =
 	| "VALIDATION_FAILED"
+	| "SKILL_NOT_FOUND"
 	| "SKILLS_QUERY_FAILED";
 
 /** The payload accepted by the `createSkill` server function. */
@@ -38,6 +44,14 @@ export type ValidatedListInput = {
 	limit: number;
 	offset: number;
 };
+
+/** The payload accepted by the `getSkillDetail` server function. */
+export type SkillSlugInput = {
+	slug?: unknown;
+};
+
+/** The URL safe shape a skill slug must have, matching the database rule. */
+const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** The application's default page size, when the caller does not ask for one. */
 export const DEFAULT_SKILL_LIMIT = 20;
@@ -168,4 +182,28 @@ export function validateListSkillsInput(
 	}
 
 	return ok({ limit, offset });
+}
+
+/**
+ * Accepts the slug a detail page asks for, or returns the failure that keeps a
+ * malformed address from reaching the store.
+ */
+export function validateSkillDetailInput(
+	input: SkillSlugInput,
+): Result<{ slug: string }, "VALIDATION_FAILED"> {
+	const slug = asTrimmedString(input.slug);
+
+	if (
+		slug === undefined ||
+		slug.length > MAX_SLUG_LENGTH ||
+		!SKILL_SLUG_PATTERN.test(slug)
+	) {
+		return fail(
+			"VALIDATION_FAILED",
+			"That skill address is not valid.",
+			"slug",
+		);
+	}
+
+	return ok({ slug });
 }
