@@ -19,7 +19,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 1 | Skill data model | Slice 1 | in-progress |
 | 2 | Skill catalogue | Slice 1 | in-progress |
 | 3 | Publish a skill | Slice 2 | done |
-| 4 | Signed in area | Slice 3 | planned |
+| 4 | Signed in area | Slice 3 | in-progress |
 | 5 | Upvotes | Slice 4 | planned |
 | 6 | Search and filter | Slice 5 | planned |
 | 7 | Moderation | Slice 6 | planned |
@@ -104,10 +104,18 @@ spec [0005](../specs/0005-publish-a-skill/index.md) · code in `src/routes/skill
 
 ## Slice 3: Your own space
 
-### 4. Signed in area · needs a decision
+### 4. Signed in area · in-progress
 A group of pages behind sign in, sharing one nested layout and guarded on the server so an unauthenticated request never reaches them.
 **Done when:** a signed out visitor is sent away from the area, and a signed in user sees their own skills there.
-- [ ] Design it (spec): `/architect signed in area`
+- [x] Design it (spec): `/architect signed in area`
+- [ ] Build it: `/develop signed in area`
+  - [ ] The area shell, the guard, and the my skills read end to end (AC-1, AC-2, AC-5, AC-6, AC-7, AC-19)
+  - [ ] The overview and the header entry points (AC-3, AC-4)
+  - [ ] Edit and delete a skill, with the failure states and the leave guard (AC-8, AC-9, AC-10, AC-11, AC-12, AC-13, AC-14)
+  - [ ] The profile page and its name, photo, and email flows (AC-15)
+  - [ ] The theme system, the settings page, the analytics, and the accessibility pass (AC-16, AC-17, AC-18, AC-20)
+- [ ] Verify it: `/check verify signed in area`
+spec [0006](../specs/0006-signed-in-area/index.md) · code in `src/routes/account*.tsx`, `src/features/account/`, `src/features/theme/`, `src/features/skills/`
 
 ## Slice 4: Community signal
 
