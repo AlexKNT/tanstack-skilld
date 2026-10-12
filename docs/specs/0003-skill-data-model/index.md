@@ -1,7 +1,7 @@
 # 0003. Store skills and their publisher in Postgres, read and written through Drizzle
 
 **Date**: 2026-09-27
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 

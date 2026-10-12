@@ -16,8 +16,8 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | C | Product analytics | Foundation | existing |
 | D | Coding standards & tooling | Foundation | done |
 | E | Design system & UI foundation | Foundation | done |
-| 1 | Skill data model | Slice 1 | in-progress |
-| 2 | Skill catalogue | Slice 1 | in-progress |
+| 1 | Skill data model | Slice 1 | done |
+| 2 | Skill catalogue | Slice 1 | done |
 | 3 | Publish a skill | Slice 2 | done |
 | 4 | Signed in area | Slice 3 | in-progress |
 | 5 | Upvotes | Slice 4 | in-progress |
@@ -61,7 +61,7 @@ spec [0002](../specs/0002-design-system/index.md) · code in `src/styles.css`, `
 
 ## Slice 1: Read the catalogue on real data
 
-### 1. Skill data model · in-progress
+### 1. Skill data model · done
 Define the skill and owner shapes and where they live, with the read and write queries every later slice leans on.
 **Done when:** skills and owners are stored, typed end to end, and one server function can read the list and write a skill.
 - [x] Design it (spec): `/architect skill data model`
@@ -74,7 +74,7 @@ Define the skill and owner shapes and where they live, with the read and write q
 - [x] Verify it: `/check verify skill data model`
 spec [0003](../specs/0003-skill-data-model/index.md) · code in `src/db/`, `src/features/skills/`, `scripts/seed.ts`, `drizzle/`, `drizzle.config.ts`
 
-### 2. Skill catalogue · in-progress
+### 2. Skill catalogue · done
 The home list of skill cards and the detail page for a single skill, reading real data. This is the first real thread through UI, server, and store.
 **Done when:** the home page lists skills from the store with loading, empty, and error states, and a card opens a detail page at its own URL.
 - [x] Design it (spec): `/architect skill catalogue`

@@ -32,7 +32,7 @@ hour later.
 
 ## Build approach
 
-<TBD, set by /scope>
+Tracer Bullet (prove the whole pipe works end to end before building any one part fully).
 
 ## Commands
 
@@ -47,7 +47,7 @@ npm run generate-routes  # rebuild src/routeTree.gen.ts
 
 ## Specs
 
-Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`.
+Stored in `docs/specs/`. Format: `docs/specs/NNNN-title/index.md`.
 
 ## Rules
 
@@ -61,6 +61,8 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`.
 - Validate required environment variables at startup.
 - UI meets WCAG AA: labelled controls, visible focus, keyboard reachable.
 - Folder by feature: a feature's routes, components, hooks, and server functions live together under `src/features/<feature>`. Shared pieces stay in `src/components`, `src/lib`, `src/hooks`, and `src/integrations`.
+- Design system: build all UI to `design.md` (art direction and the maximalist product bar); token values live in CSS.
+- Style with the semantic tokens in `src/styles.css` plus Tailwind utilities: no literal colour in a component, and no `dark:` colour override, since the tokens answer both themes.
 
 ## Tooling
 
@@ -70,8 +72,8 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`.
 
 ## Git
 
+- one branch: `main`, commit to it directly, no feature or topic branches
 - integration: on
-- branch prefix: feat/
 - commit: per-milestone
 
 ## Agent skills
@@ -87,5 +89,8 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`.
 ## Context files
 
 <!-- Nested AGENTS.md files are listed here as they are created -->
+
+- [src/features/account/AGENTS.md](src/features/account/AGENTS.md): the guarded signed in area, its ownership rule, and the profile flows
+- [src/features/theme/AGENTS.md](src/features/theme/AGENTS.md): the cookie backed theme choice and the before paint contract
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._

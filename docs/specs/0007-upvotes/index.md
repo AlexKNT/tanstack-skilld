@@ -1,7 +1,7 @@
 # 0007. Let signed in visitors upvote a skill, with the count on cards and on the detail page
 
 **Date**: 2026-10-12
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
