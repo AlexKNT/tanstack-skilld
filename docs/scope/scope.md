@@ -21,7 +21,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 3 | Publish a skill | Slice 2 | done |
 | 4 | Signed in area | Slice 3 | in-progress |
 | 5 | Upvotes | Slice 4 | in-progress |
-| 6 | Search and filter | Slice 5 | planned |
+| 6 | Search and filter | Slice 5 | in-progress |
 | 7 | Moderation | Slice 6 | planned |
 | 8 | SEO metadata and sitemap | Hardening | planned |
 | 9 | Cookie notice and legal pages | Hardening | planned |
@@ -133,10 +133,18 @@ spec [0007](../specs/0007-upvotes/index.md) · code in `src/db/`, `src/features/
 
 ## Slice 5: Find skills
 
-### 6. Search and filter · needs a decision
+### 6. Search and filter · in-progress
 Narrow the catalogue by text and by tag, with the choice in the URL so a filtered view can be shared.
 **Done when:** the list filters as the user types or picks a tag, the URL carries the filter, and an empty result renders a helpful state.
-- [ ] Design it (spec): `/architect search and filter`
+- [x] Design it (spec): `/architect search and filter`
+- [ ] Build it: `/develop search and filter`
+  - [ ] The store change and the shared tag rule (AC-1, AC-2, AC-7)
+  - [ ] The filter end to end: the read takes a term and a tag, and the address carries both (AC-5, AC-6, AC-8, AC-10)
+  - [ ] Tags end to end: both forms collect them, and the cards and the detail page show them (AC-3, AC-4)
+  - [ ] The filter's interface: the box, the chips, the pacing, the empty surface and the announcement (AC-9, AC-11, AC-12, AC-13, AC-15)
+  - [ ] The event, the accessibility pass and the boundary check (AC-13, AC-14, AC-16)
+- [ ] Verify it: `/check verify search and filter`
+spec [0008](../specs/0008-search-and-filter/index.md)
 
 ## Slice 6: Keep it tidy
 
@@ -170,6 +178,7 @@ Out of scope for this build pass, kept so the plan stays honest.
 - **Comments**: discussion on a skill page · needs a decision
 - **Theme switcher**: let a visitor pick light or dark, with the choice remembered · from spec 0002 · needs a decision
 - **Upvoted skills list**: a page in the account area listing the skills you upvoted · from spec 0007 · needs a decision
+- **Tag landing page**: one page per tag, listing the skills that carry it · from spec 0008 · needs a decision
 
 ## Legend
 
