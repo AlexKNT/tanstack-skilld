@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
 import { Button } from "#/components/ui/button";
+import { ThemeToggle } from "#/features/theme/components/theme-toggle";
 
 /**
  * Sticky top navigation shown on every route.
@@ -37,6 +38,7 @@ export function SiteHeader() {
 				</Link>
 
 				<div className="flex items-center gap-2">
+					<ThemeToggle />
 					<Show when="signed-out">
 						<Button variant="ghost" size="sm" onClick={handleSignIn}>
 							Sign in
@@ -46,6 +48,9 @@ export function SiteHeader() {
 						</Button>
 					</Show>
 					<Show when="signed-in">
+						<Button asChild size="sm" variant="ghost">
+							<Link to="/account">Your account</Link>
+						</Button>
 						<Button asChild size="sm" variant="ghost">
 							<Link to="/skills/new">Publish a skill</Link>
 						</Button>

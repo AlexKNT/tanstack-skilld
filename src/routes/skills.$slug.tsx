@@ -83,6 +83,14 @@ function SkillDetailPage() {
 							>
 								Added {formatSkillDate(skill.createdAt)}
 							</time>
+							{skill.updatedAt > skill.createdAt ? (
+								<time
+									className="text-sm text-muted-foreground"
+									dateTime={skill.updatedAt.toISOString()}
+								>
+									Edited {formatSkillDate(skill.updatedAt)}
+								</time>
+							) : null}
 						</div>
 						<SkillInstallButton installUrl={skill.installUrl} />
 					</div>

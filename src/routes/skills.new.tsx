@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ensureSignedIn } from "#/features/skills/auth";
+import { ensureSignedIn, PUBLISH_PATH } from "#/features/skills/auth";
 import {
 	PublishSkillForm,
 	PublishSkillIntro,
@@ -18,7 +18,7 @@ import {
  */
 export const Route = createFileRoute("/skills/new")({
 	beforeLoad: async () => {
-		await ensureSignedIn();
+		await ensureSignedIn({ data: { returnTo: PUBLISH_PATH } });
 	},
 	component: PublishSkillPage,
 });

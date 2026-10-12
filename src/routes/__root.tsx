@@ -11,10 +11,22 @@ import {
 	createRootRouteWithContext,
 	HeadContent,
 	Scripts,
+	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useRef } from "react";
 import { SiteHeader } from "#/components/site-header";
+import { readThemeChoice } from "#/features/theme/data";
+import {
+	DEFAULT_THEME,
+	isThemeChoice,
+	THEME_INIT_SCRIPT,
+	type ThemeChoice,
+} from "#/features/theme/theme";
+import {
+	ThemeChoiceContext,
+	useThemeClassName,
+} from "#/features/theme/use-theme";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
@@ -23,6 +35,14 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+	beforeLoad: async () => {
+		try {
+			return { theme: await readThemeChoice() };
+		} catch {
+			// A theme is cosmetic: never let its read break the whole app.
+			return { theme: DEFAULT_THEME };
+		}
+	},
 	head: () => ({
 		meta: [
 			{
@@ -42,6 +62,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				href: appCss,
 			},
 		],
+		// Runs in the head, before the first paint, so the system choice never
+		// flashes the wrong theme. The script is a constant in this repo.
+		scripts: [{ children: THEME_INIT_SCRIPT }],
 	}),
 	shellComponent: RootDocument,
 });
@@ -86,33 +109,54 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootContent({ children }: { children: React.ReactNode }) {
+	const theme = useResolvedThemeChoice();
+	const themeClass = useThemeClassName(theme);
+
 	return (
-		<html lang="en">
+		<html className={themeClass} lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
 			<body>
-				<ClerkProvider appearance={{ theme: shadcn }}>
-					<PostHogUserIdentification />
-					<SiteHeader />
-					{children}
-					<TanStackDevtools
-						config={{
-							position: "bottom-right",
-						}}
-						plugins={[
-							{
-								name: "Tanstack Router",
-								render: <TanStackRouterDevtoolsPanel />,
-							},
-							TanStackQueryDevtools,
-						]}
-					/>
-					<Scripts />
-				</ClerkProvider>
+				<ThemeChoiceContext.Provider value={theme}>
+					<ClerkProvider appearance={{ theme: shadcn }}>
+						<PostHogUserIdentification />
+						<SiteHeader />
+						{children}
+						<TanStackDevtools
+							config={{
+								position: "bottom-right",
+							}}
+							plugins={[
+								{
+									name: "Tanstack Router",
+									render: <TanStackRouterDevtoolsPanel />,
+								},
+								TanStackQueryDevtools,
+							]}
+						/>
+						<Scripts />
+					</ClerkProvider>
+				</ThemeChoiceContext.Provider>
 			</body>
 		</html>
 	);
+}
+
+/**
+ * The theme choice the root route resolved on the server, read back from the
+ * router context. The shell is not a normal route component, so it reads the
+ * root match's context rather than calling a route hook.
+ */
+function useResolvedThemeChoice(): ThemeChoice {
+	return useRouterState({
+		select: (state) => {
+			const context = state.matches[0]?.context as
+				| { theme?: unknown }
+				| undefined;
+			return isThemeChoice(context?.theme) ? context.theme : DEFAULT_THEME;
+		},
+	});
 }
 
 function PostHogUserIdentification() {

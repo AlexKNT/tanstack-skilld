@@ -38,6 +38,11 @@ export const skills = pgTable(
 	(table) => [
 		uniqueIndex("skills_slug_unique").on(table.slug),
 		index("skills_created_at_idx").on(table.createdAt.desc(), table.id.desc()),
+		index("skills_author_updated_idx").on(
+			table.authorId,
+			table.updatedAt.desc(),
+			table.id.desc(),
+		),
 		check(
 			"skills_slug_lowercase_url_safe",
 			sql`${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,

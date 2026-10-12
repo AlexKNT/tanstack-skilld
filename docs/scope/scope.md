@@ -20,7 +20,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 2 | Skill catalogue | Slice 1 | in-progress |
 | 3 | Publish a skill | Slice 2 | done |
 | 4 | Signed in area | Slice 3 | in-progress |
-| 5 | Upvotes | Slice 4 | planned |
+| 5 | Upvotes | Slice 4 | in-progress |
 | 6 | Search and filter | Slice 5 | planned |
 | 7 | Moderation | Slice 6 | planned |
 | 8 | SEO metadata and sitemap | Hardening | planned |
@@ -108,21 +108,28 @@ spec [0005](../specs/0005-publish-a-skill/index.md) · code in `src/routes/skill
 A group of pages behind sign in, sharing one nested layout and guarded on the server so an unauthenticated request never reaches them.
 **Done when:** a signed out visitor is sent away from the area, and a signed in user sees their own skills there.
 - [x] Design it (spec): `/architect signed in area`
-- [ ] Build it: `/develop signed in area`
-  - [ ] The area shell, the guard, and the my skills read end to end (AC-1, AC-2, AC-5, AC-6, AC-7, AC-19)
-  - [ ] The overview and the header entry points (AC-3, AC-4)
-  - [ ] Edit and delete a skill, with the failure states and the leave guard (AC-8, AC-9, AC-10, AC-11, AC-12, AC-13, AC-14)
-  - [ ] The profile page and its name, photo, and email flows (AC-15)
-  - [ ] The theme system, the settings page, the analytics, and the accessibility pass (AC-16, AC-17, AC-18, AC-20)
+- [x] Build it: `/develop signed in area`
+  - [x] The area shell, the guard, and the my skills read end to end (AC-1, AC-2, AC-5, AC-6, AC-7, AC-19)
+  - [x] The overview and the header entry points (AC-3, AC-4)
+  - [x] Edit and delete a skill, with the failure states and the leave guard (AC-8, AC-9, AC-10, AC-11, AC-12, AC-13, AC-14)
+  - [x] The profile page and its name, photo, and email flows (AC-15)
+  - [x] The theme system, the settings page, the analytics, and the accessibility pass (AC-16, AC-17, AC-18, AC-20)
 - [ ] Verify it: `/check verify signed in area`
 spec [0006](../specs/0006-signed-in-area/index.md) · code in `src/routes/account*.tsx`, `src/features/account/`, `src/features/theme/`, `src/features/skills/`
 
 ## Slice 4: Community signal
 
-### 5. Upvotes · needs a decision
+### 5. Upvotes · in-progress
 Signed in users upvote a skill once, and the count shows on cards and on the detail page.
 **Done when:** an upvote persists, the count updates, a second upvote does not count twice, and signed out visitors see the count but cannot vote.
-- [ ] Design it (spec): `/architect upvotes`
+- [x] Design it (spec): `/architect upvotes`
+- [ ] Build it: `/develop upvotes`
+  - [ ] The vote in the store and the reads that carry it (AC-1, AC-2, AC-5, AC-6, AC-12, AC-15, AC-16)
+  - [ ] The thin thread: a vote from the detail page and from a card, on real data (AC-3, AC-4, AC-10)
+  - [ ] The cache rules, the rollback, and the signed out path (AC-7, AC-8, AC-9, AC-11)
+  - [ ] Accessibility, the event, and the verification pass (AC-11, AC-13, AC-14)
+- [ ] Verify it: `/check verify upvotes`
+spec [0007](../specs/0007-upvotes/index.md) · code in `src/db/`, `src/features/skills/`
 
 ## Slice 5: Find skills
 
@@ -162,6 +169,7 @@ Out of scope for this build pass, kept so the plan stays honest.
 - **Image upload**: let a skill carry a logo or screenshot · needs a decision
 - **Comments**: discussion on a skill page · needs a decision
 - **Theme switcher**: let a visitor pick light or dark, with the choice remembered · from spec 0002 · needs a decision
+- **Upvoted skills list**: a page in the account area listing the skills you upvoted · from spec 0007 · needs a decision
 
 ## Legend
 

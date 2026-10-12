@@ -10,21 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as DesignRouteImport } from './routes/design'
+import { Route as AccountIndexRouteImport } from './routes/account.index'
+import { Route as AccountProfileRouteImport } from './routes/account.profile'
+import { Route as AccountSettingsRouteImport } from './routes/account.settings'
+import { Route as AccountSkillsRouteImport } from './routes/account.skills'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SkillsSlugRouteImport } from './routes/skills.$slug'
 import { Route as SkillsNewRouteImport } from './routes/skills.new'
+import { Route as AccountSkillsIndexRouteImport } from './routes/account.skills.index'
+import { Route as AccountSkillsSlugEditRouteImport } from './routes/account.skills.$slug.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DesignRoute = DesignRouteImport.update({
   id: '/design',
   path: '/design',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountProfileRoute = AccountProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountSettingsRoute = AccountSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountSkillsRoute = AccountSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => AccountRoute,
 } as any)
 const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/sign-in/$',
@@ -46,61 +78,110 @@ const SkillsNewRoute = SkillsNewRouteImport.update({
   path: '/skills/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountSkillsIndexRoute = AccountSkillsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AccountSkillsRoute,
+} as any)
+const AccountSkillsSlugEditRoute = AccountSkillsSlugEditRouteImport.update({
+  id: '/$slug/edit',
+  path: '/$slug/edit',
+  getParentRoute: () => AccountSkillsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
   '/design': typeof DesignRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/settings': typeof AccountSettingsRoute
+  '/account/skills': typeof AccountSkillsRouteWithChildren
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/skills/new': typeof SkillsNewRoute
+  '/account/': typeof AccountIndexRoute
+  '/account/skills/': typeof AccountSkillsIndexRoute
+  '/account/skills/$slug/edit': typeof AccountSkillsSlugEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/design': typeof DesignRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/skills/new': typeof SkillsNewRoute
+  '/account': typeof AccountIndexRoute
+  '/account/skills': typeof AccountSkillsIndexRoute
+  '/account/skills/$slug/edit': typeof AccountSkillsSlugEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
   '/design': typeof DesignRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/settings': typeof AccountSettingsRoute
+  '/account/skills': typeof AccountSkillsRouteWithChildren
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/skills/new': typeof SkillsNewRoute
+  '/account/': typeof AccountIndexRoute
+  '/account/skills/': typeof AccountSkillsIndexRoute
+  '/account/skills/$slug/edit': typeof AccountSkillsSlugEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account'
     | '/design'
+    | '/account/profile'
+    | '/account/settings'
+    | '/account/skills'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/skills/$slug'
     | '/skills/new'
+    | '/account/'
+    | '/account/skills/'
+    | '/account/skills/$slug/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/design'
+    | '/account/profile'
+    | '/account/settings'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/skills/$slug'
     | '/skills/new'
+    | '/account'
+    | '/account/skills'
+    | '/account/skills/$slug/edit'
   id:
     | '__root__'
     | '/'
+    | '/account'
     | '/design'
+    | '/account/profile'
+    | '/account/settings'
+    | '/account/skills'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/skills/$slug'
     | '/skills/new'
+    | '/account/'
+    | '/account/skills/'
+    | '/account/skills/$slug/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRouteWithChildren
   DesignRoute: typeof DesignRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignUpSplatRoute: typeof SignUpSplatRoute
@@ -117,12 +198,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/design': {
       id: '/design'
       path: '/design'
       fullPath: '/design'
       preLoaderRoute: typeof DesignRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/profile': {
+      id: '/account/profile'
+      path: '/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AccountProfileRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/settings': {
+      id: '/account/settings'
+      path: '/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AccountSettingsRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/skills': {
+      id: '/account/skills'
+      path: '/skills'
+      fullPath: '/account/skills'
+      preLoaderRoute: typeof AccountSkillsRouteImport
+      parentRoute: typeof AccountRoute
     }
     '/sign-in/$': {
       id: '/sign-in/$'
@@ -152,11 +268,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SkillsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/skills/': {
+      id: '/account/skills/'
+      path: '/'
+      fullPath: '/account/skills/'
+      preLoaderRoute: typeof AccountSkillsIndexRouteImport
+      parentRoute: typeof AccountSkillsRoute
+    }
+    '/account/skills/$slug/edit': {
+      id: '/account/skills/$slug/edit'
+      path: '/$slug/edit'
+      fullPath: '/account/skills/$slug/edit'
+      preLoaderRoute: typeof AccountSkillsSlugEditRouteImport
+      parentRoute: typeof AccountSkillsRoute
+    }
   }
 }
 
+interface AccountSkillsRouteChildren {
+  AccountSkillsIndexRoute: typeof AccountSkillsIndexRoute
+  AccountSkillsSlugEditRoute: typeof AccountSkillsSlugEditRoute
+}
+
+const AccountSkillsRouteChildren: AccountSkillsRouteChildren = {
+  AccountSkillsIndexRoute: AccountSkillsIndexRoute,
+  AccountSkillsSlugEditRoute: AccountSkillsSlugEditRoute,
+}
+
+const AccountSkillsRouteWithChildren = AccountSkillsRoute._addFileChildren(
+  AccountSkillsRouteChildren,
+)
+
+interface AccountRouteChildren {
+  AccountProfileRoute: typeof AccountProfileRoute
+  AccountSettingsRoute: typeof AccountSettingsRoute
+  AccountSkillsRoute: typeof AccountSkillsRouteWithChildren
+  AccountIndexRoute: typeof AccountIndexRoute
+}
+
+const AccountRouteChildren: AccountRouteChildren = {
+  AccountProfileRoute: AccountProfileRoute,
+  AccountSettingsRoute: AccountSettingsRoute,
+  AccountSkillsRoute: AccountSkillsRouteWithChildren,
+  AccountIndexRoute: AccountIndexRoute,
+}
+
+const AccountRouteWithChildren =
+  AccountRoute._addFileChildren(AccountRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRouteWithChildren,
   DesignRoute: DesignRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignUpSplatRoute: SignUpSplatRoute,

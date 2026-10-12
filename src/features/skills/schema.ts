@@ -50,6 +50,11 @@ export type SkillSlugInput = {
 	slug?: unknown;
 };
 
+/** The payload accepted by the `updateSkill` server function. */
+export type UpdateSkillInput = CreateSkillInput & {
+	slug?: unknown;
+};
+
 /** The URL safe shape a skill slug must have, matching the database rule. */
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -206,4 +211,25 @@ export function validateSkillDetailInput(
 	}
 
 	return ok({ slug });
+}
+
+/**
+ * Checks an edit payload: the slug the skill is addressed by, plus the same four
+ * fields publishing collects, validated by the same rules so the two forms
+ * never drift.
+ */
+export function validateUpdateSkillInput(
+	input: UpdateSkillInput,
+): Result<{ slug: string } & ValidatedSkillInput, "VALIDATION_FAILED"> {
+	const slug = validateSkillDetailInput(input);
+	if (!slug.ok) {
+		return slug;
+	}
+
+	const fields = validateCreateSkillInput(input);
+	if (!fields.ok) {
+		return fields;
+	}
+
+	return ok({ slug: slug.value.slug, ...fields.value });
 }

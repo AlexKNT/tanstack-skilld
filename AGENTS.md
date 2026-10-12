@@ -1,5 +1,27 @@
 # tanstack-skilld
 
+## How to talk to me
+
+Short. If a sentence isn't telling me something I need, cut it.
+
+**Ask with an answer attached.** One specific question, and say which way you'd
+go and why. "A or B, I'd take B because it keeps the parser standalone" is
+answerable in two seconds. An open question isn't. Never pick a direction
+silently, never build both.
+
+**When you need something only I can give you** — a key, a token, a value in
+`.env.local` — say exactly what and exactly where, then stop.
+
+**No walls of text.** Don't summarise every file you touched or restate the plan
+back to me. When a phase is done, say what it does and what the check should
+show, in a few lines.
+
+**Plain English.** If you're reaching for a bulleted breakdown of something
+that's one sentence, it's one sentence.
+
+**Say when something didn't work.** A failure worked around quietly costs me an
+hour later.
+
 ## Stack
 
 - **Language / Runtime**: TypeScript 6, strict mode, Node

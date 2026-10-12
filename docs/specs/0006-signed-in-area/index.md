@@ -1,7 +1,7 @@
 # 0006. Give signed in users an account area with their own skills, profile, and theme
 
 **Date**: 2026-10-02
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
