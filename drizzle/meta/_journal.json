@@ -15,6 +15,13 @@
       "when": 1790945464235,
       "tag": "0001_previous_alex_wilder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791904511337,
+      "tag": "0002_cynical_landau",
+      "breakpoints": true
     }
   ]
 }

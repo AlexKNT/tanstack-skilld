@@ -3,6 +3,7 @@ import {
 	check,
 	index,
 	pgTable,
+	primaryKey,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -75,3 +76,36 @@ export type Skill = typeof skills.$inferSelect;
 
 /** A skill as it is inserted, inferred from the schema above. */
 export type NewSkill = typeof skills.$inferInsert;
+
+/**
+ * The upvotes cast on a skill.
+ *
+ * One row is one person's vote, so the count shown anywhere is a count of these
+ * rows and no second copy of the number exists to drift. The pair
+ * (`skill_id`, `user_id`) is the primary key, which is what refuses a second
+ * vote for the same skill from the database rather than from the interface. The
+ * voter is held as a Clerk user id, the same way a skill's author is, so there
+ * is no local users table to reference. A skill's votes leave with the skill.
+ */
+export const skillUpvotes = pgTable(
+	"skill_upvotes",
+	{
+		skillId: uuid("skill_id")
+			.notNull()
+			.references(() => skills.id, { onDelete: "cascade" }),
+		userId: text("user_id").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.skillId, table.userId] }),
+		index("skill_upvotes_user_skill_idx").on(table.userId, table.skillId),
+	],
+);
+
+/** One stored vote, inferred from the schema above. */
+export type SkillUpvote = typeof skillUpvotes.$inferSelect;
+
+/** A vote as it is inserted, inferred from the schema above. */
+export type NewSkillUpvote = typeof skillUpvotes.$inferInsert;

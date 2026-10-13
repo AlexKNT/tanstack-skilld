@@ -2,25 +2,32 @@ import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { createServerFn } from "@tanstack/react-start";
 
 import {
+	countUpvoteRows,
 	deleteSkillRow,
+	deleteUpvoteRow,
 	findSkillBySlug,
 	findSkillRowForAuthor,
 	insertSkillWithSlug,
+	insertUpvoteRow,
 	listSkillRows,
 	listSkillRowsByAuthor,
 	type SkillListRow,
+	skillRowExists,
 	updateSkillRow,
 } from "#/db/queries";
 import { fail, ok, type Result } from "#/db/result";
 import {
 	type CreateSkillInput,
+	type SetUpvoteInput,
 	type SkillFailureCode,
 	type SkillReadFailureCode,
 	type SkillSlugInput,
 	type UpdateSkillInput,
+	type UpvoteFailureCode,
 	type ValidatedSkillInput,
 	validateCreateSkillInput,
 	validateListSkillsInput,
+	validateSetUpvoteInput,
 	validateSkillDetailInput,
 	validateUpdateSkillInput,
 } from "./schema";
@@ -41,6 +48,8 @@ export type SkillListItem = {
 	authorId: string | undefined;
 	installUrl: string | undefined;
 	createdAt: Date;
+	upvoteCount: number;
+	viewerHasUpvoted: boolean;
 };
 
 /**
@@ -64,7 +73,8 @@ export const listSkills = createServerFn({ method: "GET" })
 				return data;
 			}
 
-			return listSkillRows(data.value.limit, data.value.offset);
+			const viewerId = await currentViewerId();
+			return listSkillRows(data.value.limit, data.value.offset, viewerId);
 		},
 	);
 
@@ -84,6 +94,8 @@ export type SkillCard = {
 	installUrl: string | undefined;
 	createdAt: Date;
 	author: SkillAuthor | undefined;
+	upvoteCount: number;
+	viewerHasUpvoted: boolean;
 };
 
 /** One page of cards, and whether a further page follows. */
@@ -103,7 +115,9 @@ export type SkillDetail = SkillCard & {
  *
  * Asks the store for one row more than the page holds, so `hasMore` is decided
  * from a real row rather than from the page size: an exact multiple of the page
- * size correctly reports that nothing follows.
+ * size correctly reports that nothing follows. The viewer is read from the
+ * session here, never from the browser, and each card carries the skill's count
+ * and the viewer's own vote.
  *
  * Public, and deliberately returns a failure rather than throwing, so the page
  * renders an error state instead of falling over.
@@ -119,7 +133,8 @@ export const listSkillCards = createServerFn({ method: "GET" })
 			}
 
 			const { limit, offset } = data.value;
-			const rows = await listSkillRows(limit + 1, offset);
+			const viewerId = await currentViewerId();
+			const rows = await listSkillRows(limit + 1, offset, viewerId);
 			if (!rows.ok) {
 				return rows;
 			}
@@ -139,7 +154,8 @@ export const listSkillCards = createServerFn({ method: "GET" })
  * Reads one skill by its slug, for the detail page.
  *
  * Public. A slug that is not stored returns `SKILL_NOT_FOUND` rather than an
- * empty success, so the page can answer with a real 404.
+ * empty success, so the page can answer with a real 404. The viewer's own vote
+ * is read from the session, the same way the catalogue reads it.
  */
 export const getSkillDetail = createServerFn({ method: "GET" })
 	.inputValidator((input: SkillSlugInput) => validateSkillDetailInput(input))
@@ -149,7 +165,8 @@ export const getSkillDetail = createServerFn({ method: "GET" })
 				return data;
 			}
 
-			const found = await findSkillBySlug(data.value.slug);
+			const viewerId = await currentViewerId();
+			const found = await findSkillBySlug(data.value.slug, viewerId);
 			if (!found.ok) {
 				return found;
 			}
@@ -175,6 +192,8 @@ export const getSkillDetail = createServerFn({ method: "GET" })
 				updatedAt: row.updatedAt,
 				createdAt: row.createdAt,
 				author: authorId === undefined ? undefined : authors.get(authorId),
+				upvoteCount: row.upvoteCount,
+				viewerHasUpvoted: row.viewerHasUpvoted,
 			});
 		},
 	);
@@ -192,6 +211,8 @@ function toCard(
 		installUrl: row.installUrl,
 		createdAt: row.createdAt,
 		author: row.authorId === undefined ? undefined : authors.get(row.authorId),
+		upvoteCount: row.upvoteCount,
+		viewerHasUpvoted: row.viewerHasUpvoted,
 	};
 }
 
@@ -239,6 +260,102 @@ async function loadAuthors(
 		return new Map();
 	}
 }
+
+/**
+ * Reads the signed in user's id, or nothing when there is no session.
+ *
+ * A failed session read answers "signed out" rather than failing: the count is
+ * public, so a Clerk problem should leave the page rendering with its counts
+ * instead of taking it down. The voter is always this value read on the server,
+ * never a value supplied by the browser.
+ */
+async function currentViewerId(): Promise<string | undefined> {
+	try {
+		const { isAuthenticated, userId } = await auth();
+
+		return isAuthenticated && userId ? userId : undefined;
+	} catch (error) {
+		console.error("[skills] session read failed", error);
+		return undefined;
+	}
+}
+
+/**
+ * Reads the viewer's id for the root route, which puts it in the cache key of
+ * every read that answers per viewer, so one person's vote state can never be
+ * served as another's. Answers `undefined` when signed out.
+ */
+export const readViewerId = createServerFn({ method: "GET" }).handler(
+	async (): Promise<string | undefined> => currentViewerId(),
+);
+
+/** The state one skill's votes are in for one viewer. */
+export type UpvoteState = {
+	upvoted: boolean;
+	upvoteCount: number;
+};
+
+/**
+ * Moves one skill's vote for the signed in viewer to the state asked for.
+ *
+ * Takes the state to reach rather than the state held, so both directions are
+ * safe to repeat or retry: asking for a vote that is already stored leaves one
+ * row, and asking for no vote when there is none leaves nothing. Requires a
+ * session, and the voter is that session's user id, never the payload's. The
+ * answer carries the state the store now holds and the count read from it, so
+ * the caller can settle its button and its number without asking again.
+ */
+export const setUpvote = createServerFn({ method: "POST" })
+	.inputValidator((input: SetUpvoteInput) => input)
+	.handler(
+		async ({ data }): Promise<Result<UpvoteState, UpvoteFailureCode>> => {
+			const { isAuthenticated, userId } = await auth();
+
+			if (!isAuthenticated || !userId) {
+				return fail("UNAUTHENTICATED", "Sign in to upvote a skill.");
+			}
+
+			const validated = validateSetUpvoteInput(data);
+			if (!validated.ok) {
+				return validated;
+			}
+
+			const { skillId, upvoted } = validated.value;
+
+			if (upvoted) {
+				const inserted = await insertUpvoteRow(skillId, userId);
+				if (!inserted.ok) {
+					return inserted;
+				}
+			} else {
+				// A withdrawal has no foreign key to lean on, so the skill is
+				// checked first rather than reporting a delete that matched nothing.
+				const exists = await skillRowExists(skillId);
+				if (!exists.ok) {
+					return exists;
+				}
+
+				if (!exists.value) {
+					return fail(
+						"SKILL_NOT_FOUND",
+						"That skill does not exist or has been removed.",
+					);
+				}
+
+				const removed = await deleteUpvoteRow(skillId, userId);
+				if (!removed.ok) {
+					return removed;
+				}
+			}
+
+			const count = await countUpvoteRows(skillId);
+			if (!count.ok) {
+				return count;
+			}
+
+			return ok({ upvoted, upvoteCount: count.value });
+		},
+	);
 
 /** The created skill a caller gets back, including the slug the server chose. */
 export type CreatedSkill = {

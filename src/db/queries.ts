@@ -1,13 +1,14 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
 
 import { getDatabase } from "./client.server";
 import { fail, ok, type Result } from "./result";
 import type { Skill } from "./schema";
-import { skills } from "./schema";
+import { skills, skillUpvotes } from "./schema";
 
 /**
  * One row as the catalogue reads it. The snake case columns are renamed here
- * once, so no caller has to know the store's naming.
+ * once, so no caller has to know the store's naming. The two vote columns ride
+ * along with the skill, so a card needs no second request to place its button.
  */
 export type SkillListRow = {
 	id: string;
@@ -17,6 +18,17 @@ export type SkillListRow = {
 	authorId: string | undefined;
 	installUrl: string | undefined;
 	createdAt: Date;
+	upvoteCount: number;
+	viewerHasUpvoted: boolean;
+};
+
+/**
+ * One row as the detail page reads it: every stored column, plus the two vote
+ * columns the read carries.
+ */
+export type SkillDetailRow = Skill & {
+	upvoteCount: number;
+	viewerHasUpvoted: boolean;
 };
 
 /**
@@ -24,7 +36,17 @@ export type SkillListRow = {
  * boundary that turns that into `undefined`, so the rest of the app uses one
  * empty value rather than checking for two.
  */
-function toListRow(row: Skill): SkillListRow {
+function toListRow(row: {
+	id: string;
+	slug: string;
+	name: string;
+	summary: string;
+	authorId: string | null;
+	installUrl: string | null;
+	createdAt: Date;
+	upvoteCount: number;
+	viewerHasUpvoted: boolean;
+}): SkillListRow {
 	return {
 		id: row.id,
 		slug: row.slug,
@@ -33,6 +55,8 @@ function toListRow(row: Skill): SkillListRow {
 		authorId: row.authorId ?? undefined,
 		installUrl: row.installUrl ?? undefined,
 		createdAt: row.createdAt,
+		upvoteCount: row.upvoteCount,
+		viewerHasUpvoted: row.viewerHasUpvoted,
 	};
 }
 
@@ -50,33 +74,103 @@ function errorChain(error: unknown): unknown[] {
 }
 
 /**
- * Reports whether a write failed because the slug is already taken.
+ * Reports whether a write failed with one of the given store rules.
  *
- * Drizzle wraps the driver's error, so the Postgres SQLSTATE sits on the
- * wrapped cause rather than on the error handed to the caller. Both are
- * checked. SQLSTATE `23505` is unique_violation, and the only unique rule a
- * skill insert can break is the one on `slug`, because the id is generated.
+ * Drizzle wraps the driver's error, so the Postgres SQLSTATE and the constraint
+ * name sit on the wrapped cause rather than on the error handed to the caller.
+ * Both are checked, the code first, then the constraint for a driver that
+ * reports one without the other.
  */
-function isUniqueViolation(error: unknown): boolean {
+function hasStoreViolation(
+	error: unknown,
+	code: string,
+	constraint: string,
+): boolean {
 	return errorChain(error).some((link) => {
 		if (typeof link !== "object" || link === null) {
 			return false;
 		}
 
-		const { code, constraint } = link as {
+		const { code: linkCode, constraint: linkConstraint } = link as {
 			code?: unknown;
 			constraint?: unknown;
 		};
 
 		return (
-			code === "23505" ||
-			(typeof constraint === "string" && constraint === "skills_slug_unique")
+			linkCode === code ||
+			(typeof linkConstraint === "string" && linkConstraint === constraint)
 		);
 	});
 }
 
 /**
- * Reads a page of skills, newest first.
+ * Reports whether a write failed because the slug is already taken.
+ *
+ * SQLSTATE `23505` is unique_violation, and the only unique rule a skill insert
+ * can break is the one on `slug`, because the id is generated.
+ */
+function isUniqueViolation(error: unknown): boolean {
+	return hasStoreViolation(error, "23505", "skills_slug_unique");
+}
+
+/**
+ * Reports whether a vote failed because the skill it names is not stored.
+ *
+ * SQLSTATE `23503` is foreign_key_violation, and a vote's only foreign key is
+ * the one that points at `skills`, so an insert that trips it is a vote for a
+ * skill that is not there.
+ */
+function isSkillForeignKeyViolation(error: unknown): boolean {
+	return hasStoreViolation(
+		error,
+		"23503",
+		"skill_upvotes_skill_id_skills_id_fk",
+	);
+}
+
+/** The message every read and write uses for a skill that is not stored. */
+const SKILL_MISSING = "That skill does not exist or has been removed.";
+
+/**
+ * The two vote columns every skill read carries: how many votes the skill holds
+ * and whether the viewer cast one of them.
+ *
+ * The count comes from a grouped subquery joined on the skill, so it is one row
+ * per skill and can never multiply a page's rows or break the `limit + 1` rule
+ * that decides `hasMore`. The viewer's own state is an existence check against
+ * the pair, which is what the `skill_upvotes_user_skill_idx` index serves. A
+ * signed out viewer owns no vote, so the answer is a plain false rather than a
+ * query.
+ */
+function upvoteRead(viewerId: string | undefined) {
+	const counts = getDatabase()
+		.select({
+			skillId: skillUpvotes.skillId,
+			count: sql<number>`count(*)::int`.as("count"),
+		})
+		.from(skillUpvotes)
+		.groupBy(skillUpvotes.skillId)
+		.as("vote_counts");
+
+	return {
+		counts,
+		columns: {
+			upvoteCount: sql<number>`coalesce(${counts.count}, 0)::int`,
+			viewerHasUpvoted:
+				viewerId === undefined
+					? sql<boolean>`false`
+					: sql<boolean>`exists (
+						select 1 from ${skillUpvotes}
+						where ${skillUpvotes.skillId} = ${skills.id}
+							and ${skillUpvotes.userId} = ${viewerId}
+					)`,
+		},
+	};
+}
+
+/**
+ * Reads a page of skills, newest first, with each skill's vote count and
+ * whether the given viewer has voted for it.
  *
  * The order is by creation time and then by id, so two skills saved in the same
  * millisecond still come back in a stable order. Anything unexpected is turned
@@ -85,11 +179,24 @@ function isUniqueViolation(error: unknown): boolean {
 export async function listSkillRows(
 	limit: number,
 	offset: number,
+	viewerId?: string,
 ): Promise<Result<SkillListRow[], "SKILLS_QUERY_FAILED">> {
 	try {
+		const votes = upvoteRead(viewerId);
+
 		const rows = await getDatabase()
-			.select()
+			.select({
+				id: skills.id,
+				slug: skills.slug,
+				name: skills.name,
+				summary: skills.summary,
+				authorId: skills.authorId,
+				installUrl: skills.installUrl,
+				createdAt: skills.createdAt,
+				...votes.columns,
+			})
 			.from(skills)
+			.leftJoin(votes.counts, eq(votes.counts.skillId, skills.id))
 			.orderBy(desc(skills.createdAt), desc(skills.id))
 			.limit(limit)
 			.offset(offset);
@@ -147,16 +254,22 @@ export async function insertSkillWithSlug(
 }
 
 /**
- * Looks a skill up by its slug, used by the seed to decide whether a sample row
- * is already there.
+ * Looks a skill up by its slug, with its vote count and whether the given
+ * viewer has voted for it.
+ *
+ * Used by the detail page and by the seed, which only reads the stored columns.
  */
 export async function findSkillBySlug(
 	slug: string,
-): Promise<Result<Skill | undefined, "SKILLS_QUERY_FAILED">> {
+	viewerId?: string,
+): Promise<Result<SkillDetailRow | undefined, "SKILLS_QUERY_FAILED">> {
 	try {
+		const votes = upvoteRead(viewerId);
+
 		const [row] = await getDatabase()
-			.select()
+			.select({ ...getTableColumns(skills), ...votes.columns })
 			.from(skills)
+			.leftJoin(votes.counts, eq(votes.counts.skillId, skills.id))
 			.where(eq(skills.slug, slug))
 			.limit(1);
 
@@ -178,6 +291,106 @@ export async function checkSkillsTableReachable(): Promise<boolean> {
 	}
 }
 
+/**
+ * Records one person's vote on one skill.
+ *
+ * Idempotent: a vote that is already stored is left alone rather than added
+ * twice, so a repeated or retried call moves the count once. The row carries no
+ * state of its own beyond its creation time, which is the voter's own record.
+ * Reports whether a new row landed, and answers `SKILL_NOT_FOUND` when the
+ * skill is not stored, which the store's own foreign key refuses.
+ */
+export async function insertUpvoteRow(
+	skillId: string,
+	userId: string,
+): Promise<Result<boolean, "SKILL_NOT_FOUND" | "SKILLS_WRITE_FAILED">> {
+	try {
+		const rows = await getDatabase()
+			.insert(skillUpvotes)
+			.values({ skillId, userId })
+			.onConflictDoNothing()
+			.returning({ skillId: skillUpvotes.skillId });
+
+		return ok(rows.length > 0);
+	} catch (error) {
+		if (isSkillForeignKeyViolation(error)) {
+			return fail("SKILL_NOT_FOUND", SKILL_MISSING);
+		}
+
+		console.error("[skills] upvote insert failed", error);
+		return fail("SKILLS_WRITE_FAILED", "Your upvote could not be saved.");
+	}
+}
+
+/**
+ * Removes one person's vote, tolerating a vote that is not there.
+ *
+ * Idempotent in the same way as the insert, so repeating a withdrawal leaves
+ * the store as it was and the count unmoved. Reports whether a row was removed.
+ */
+export async function deleteUpvoteRow(
+	skillId: string,
+	userId: string,
+): Promise<Result<boolean, "SKILLS_WRITE_FAILED">> {
+	try {
+		const rows = await getDatabase()
+			.delete(skillUpvotes)
+			.where(
+				and(eq(skillUpvotes.skillId, skillId), eq(skillUpvotes.userId, userId)),
+			)
+			.returning({ skillId: skillUpvotes.skillId });
+
+		return ok(rows.length > 0);
+	} catch (error) {
+		console.error("[skills] upvote delete failed", error);
+		return fail("SKILLS_WRITE_FAILED", "Your upvote could not be removed.");
+	}
+}
+
+/**
+ * Counts the votes one skill holds, straight from the stored rows, so the
+ * number can never disagree with them. A skill with no votes answers zero.
+ */
+export async function countUpvoteRows(
+	skillId: string,
+): Promise<Result<number, "SKILLS_QUERY_FAILED">> {
+	try {
+		const [row] = await getDatabase()
+			.select({ count: sql<number>`count(*)::int` })
+			.from(skillUpvotes)
+			.where(eq(skillUpvotes.skillId, skillId));
+
+		return ok(row?.count ?? 0);
+	} catch (error) {
+		console.error("[skills] upvote count failed", error);
+		return fail("SKILLS_QUERY_FAILED", "The upvote count could not be read.");
+	}
+}
+
+/**
+ * Reports whether a skill is stored.
+ *
+ * Read before a vote is withdrawn, which has no foreign key of its own to lean
+ * on: a delete that matches nothing would otherwise look like a success. The
+ * only way this read goes stale is the skill being deleted in between, and a
+ * deleted skill takes its votes with it, so the answer stays honest.
+ */
+export async function skillRowExists(
+	skillId: string,
+): Promise<Result<boolean, "SKILLS_QUERY_FAILED">> {
+	try {
+		const [row] = await getDatabase()
+			.select({ id: skills.id })
+			.from(skills)
+			.where(eq(skills.id, skillId))
+			.limit(1);
+
+		return ok(row !== undefined);
+	} catch (error) {
+		console.error("[skills] skill existence check failed", error);
+		return fail("SKILLS_QUERY_FAILED", "The skill could not be loaded.");
+	}
+}
 /** Reads every skill's slug, so the seed knows which ones already exist. */
 export async function listSkillSlugs(): Promise<string[]> {
 	const rows = await getDatabase()

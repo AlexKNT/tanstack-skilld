@@ -55,8 +55,30 @@ export type UpdateSkillInput = CreateSkillInput & {
 	slug?: unknown;
 };
 
+/** The payload accepted by the `setUpvote` server function. */
+export type SetUpvoteInput = {
+	skillId?: unknown;
+	upvoted?: unknown;
+};
+
+/**
+ * The failure codes the vote write can return. The read that follows a write is
+ * a second statement, so a store that breaks between the two answers with the
+ * read failure rather than a made up count.
+ */
+export type UpvoteFailureCode =
+	| "UNAUTHENTICATED"
+	| "VALIDATION_FAILED"
+	| "SKILL_NOT_FOUND"
+	| "SKILLS_QUERY_FAILED"
+	| "SKILLS_WRITE_FAILED";
+
 /** The URL safe shape a skill slug must have, matching the database rule. */
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** The shape a stored skill's id has, so a malformed one never reaches the store. */
+const SKILL_ID_PATTERN =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The application's default page size, when the caller does not ask for one. */
 export const DEFAULT_SKILL_LIMIT = 20;
@@ -211,6 +233,34 @@ export function validateSkillDetailInput(
 	}
 
 	return ok({ slug });
+}
+
+/**
+ * Checks a vote payload: the skill it names and the state to reach. The state
+ * to reach is asked for rather than the state held, so a repeated or raced call
+ * cannot flip a vote the wrong way.
+ */
+export function validateSetUpvoteInput(
+	input: SetUpvoteInput,
+): Result<{ skillId: string; upvoted: boolean }, "VALIDATION_FAILED"> {
+	const skillId = asTrimmedString(input.skillId);
+	if (skillId === undefined || !SKILL_ID_PATTERN.test(skillId)) {
+		return fail(
+			"VALIDATION_FAILED",
+			"That skill address is not valid.",
+			"skillId",
+		);
+	}
+
+	if (typeof input.upvoted !== "boolean") {
+		return fail(
+			"VALIDATION_FAILED",
+			"An upvote has to say which state to reach.",
+			"upvoted",
+		);
+	}
+
+	return ok({ skillId, upvoted: input.upvoted });
 }
 
 /**
