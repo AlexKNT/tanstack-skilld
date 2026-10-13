@@ -123,13 +123,13 @@ spec [0006](../specs/0006-signed-in-area/index.md) · code in `src/routes/accoun
 Signed in users upvote a skill once, and the count shows on cards and on the detail page.
 **Done when:** an upvote persists, the count updates, a second upvote does not count twice, and signed out visitors see the count but cannot vote.
 - [x] Design it (spec): `/architect upvotes`
-- [ ] Build it: `/develop upvotes`
-  - [ ] The vote in the store and the reads that carry it (AC-1, AC-2, AC-5, AC-6, AC-12, AC-15, AC-16)
-  - [ ] The thin thread: a vote from the detail page and from a card, on real data (AC-3, AC-4, AC-10)
-  - [ ] The cache rules, the rollback, and the signed out path (AC-7, AC-8, AC-9, AC-11)
-  - [ ] Accessibility, the event, and the verification pass (AC-11, AC-13, AC-14)
+- [x] Build it: `/develop upvotes`
+  - [x] The vote in the store and the reads that carry it (AC-1, AC-2, AC-5, AC-6, AC-12, AC-15, AC-16)
+  - [x] The thin thread: a vote from the detail page and from a card, on real data (AC-3, AC-4, AC-10)
+  - [x] The cache rules, the rollback, and the signed out path (AC-7, AC-8, AC-9, AC-11)
+  - [x] Accessibility, the event, and the verification pass (AC-11, AC-13, AC-14)
 - [ ] Verify it: `/check verify upvotes`
-spec [0007](../specs/0007-upvotes/index.md) · code in `src/db/`, `src/features/skills/`
+spec [0007](../specs/0007-upvotes/index.md) · code in `src/db/schema.ts`, `src/db/queries.ts`, `src/features/skills/`, `src/routes/index.tsx`, `src/routes/skills.$slug.tsx`
 
 ## Slice 5: Find skills
 
