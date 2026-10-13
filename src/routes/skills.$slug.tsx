@@ -15,13 +15,14 @@ import { SkillAuthorBlock } from "#/features/skills/components/skill-author";
 import { SkillInstallButton } from "#/features/skills/components/skill-install-button";
 import { SkillMarkdown } from "#/features/skills/components/skill-markdown";
 import { SkillReadError } from "#/features/skills/components/skill-read-error";
+import { SkillUpvoteButton } from "#/features/skills/components/skill-upvote-button";
 import { formatSkillDate } from "#/features/skills/date";
 import { skillDetailQueryOptions } from "#/features/skills/query";
 
 export const Route = createFileRoute("/skills/$slug")({
-	loader: async ({ context: { queryClient }, params }) => {
+	loader: async ({ context: { queryClient, viewerId }, params }) => {
 		const result = await queryClient.ensureQueryData(
-			skillDetailQueryOptions(params.slug),
+			skillDetailQueryOptions(params.slug, viewerId),
 		);
 
 		// A missing skill is the one failure the router turns into a real 404.
@@ -36,7 +37,8 @@ export const Route = createFileRoute("/skills/$slug")({
 /** One skill's page: its identity and install action, then its markdown body. */
 function SkillDetailPage() {
 	const { slug } = Route.useParams();
-	const query = useSuspenseQuery(skillDetailQueryOptions(slug));
+	const { viewerId } = Route.useRouteContext();
+	const query = useSuspenseQuery(skillDetailQueryOptions(slug, viewerId));
 
 	if (!query.data.ok) {
 		if (query.data.code === "SKILL_NOT_FOUND") {
@@ -92,7 +94,10 @@ function SkillDetailPage() {
 								</time>
 							) : null}
 						</div>
-						<SkillInstallButton installUrl={skill.installUrl} />
+						<div className="flex flex-wrap items-center gap-2">
+							<SkillUpvoteButton skill={skill} />
+							<SkillInstallButton installUrl={skill.installUrl} />
+						</div>
 					</div>
 				</header>
 				<Separator />

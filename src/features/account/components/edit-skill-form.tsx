@@ -103,10 +103,7 @@ export function EditSkillForm({ skill }: { skill: MySkill }) {
 			savedRef.current = true;
 			posthog.capture("skill_updated", { slug: result.value.slug });
 
-			await queryClient.invalidateQueries({
-				queryKey: skillKeys.detail(skill.slug),
-			});
-			await queryClient.invalidateQueries({ queryKey: skillKeys.cards() });
+			await queryClient.invalidateQueries({ queryKey: skillKeys.all });
 			await queryClient.invalidateQueries({ queryKey: mySkillKeys.list() });
 			await queryClient.invalidateQueries({
 				queryKey: mySkillKeys.overview(),

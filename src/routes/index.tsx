@@ -20,8 +20,8 @@ import { SkillReadError } from "#/features/skills/components/skill-read-error";
 import { skillCardsQueryOptions } from "#/features/skills/query";
 
 export const Route = createFileRoute("/")({
-	loader: ({ context: { queryClient } }) =>
-		queryClient.ensureInfiniteQueryData(skillCardsQueryOptions()),
+	loader: ({ context: { queryClient, viewerId } }) =>
+		queryClient.ensureInfiniteQueryData(skillCardsQueryOptions(viewerId)),
 	pendingComponent: CatalogueLoading,
 	component: Catalogue,
 });
@@ -37,7 +37,8 @@ const CATALOGUE_ERROR_MESSAGE = "The catalogue could not be loaded.";
  * client without fetching the first page twice.
  */
 function Catalogue() {
-	const query = useInfiniteQuery(skillCardsQueryOptions());
+	const { viewerId } = Route.useRouteContext();
+	const query = useInfiniteQuery(skillCardsQueryOptions(viewerId));
 
 	if (query.status === "pending") {
 		return <CatalogueLoading />;

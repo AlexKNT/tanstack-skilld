@@ -44,8 +44,7 @@ export function DeleteSkillDialog({ slug }: { slug: string }) {
 
 			posthog.capture("skill_deleted", { slug });
 
-			await queryClient.invalidateQueries({ queryKey: skillKeys.detail(slug) });
-			await queryClient.invalidateQueries({ queryKey: skillKeys.cards() });
+			await queryClient.invalidateQueries({ queryKey: skillKeys.all });
 			await queryClient.invalidateQueries({ queryKey: mySkillKeys.list() });
 			await queryClient.invalidateQueries({
 				queryKey: mySkillKeys.overview(),

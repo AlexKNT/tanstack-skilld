@@ -16,6 +16,8 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useRef } from "react";
 import { SiteHeader } from "#/components/site-header";
+import { readViewerId } from "#/features/skills/data";
+import { useSkillViewerCacheSync } from "#/features/skills/use-viewer";
 import { readThemeChoice } from "#/features/theme/data";
 import {
 	DEFAULT_THEME,
@@ -36,12 +38,14 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async () => {
-		try {
-			return { theme: await readThemeChoice() };
-		} catch {
-			// A theme is cosmetic: never let its read break the whole app.
-			return { theme: DEFAULT_THEME };
-		}
+		// Both reads are small and independent, so they travel together. The
+		// viewer id is what keeps one person's vote state out of another's page.
+		const [theme, viewerId] = await Promise.all([
+			readThemeChoice().catch(() => DEFAULT_THEME),
+			readViewerId(),
+		]);
+
+		return { theme, viewerId };
 	},
 	head: () => ({
 		meta: [
@@ -121,6 +125,7 @@ function RootContent({ children }: { children: React.ReactNode }) {
 				<ThemeChoiceContext.Provider value={theme}>
 					<ClerkProvider appearance={{ theme: shadcn }}>
 						<PostHogUserIdentification />
+						<SkillViewerCacheSync />
 						<SiteHeader />
 						{children}
 						<TanStackDevtools
@@ -141,6 +146,17 @@ function RootContent({ children }: { children: React.ReactNode }) {
 			</body>
 		</html>
 	);
+}
+
+/**
+ * Keeps the viewer's reads in step with the session. Mounted inside the Clerk
+ * provider, beside the analytics identification, because signing in through the
+ * header's dialog navigates nowhere.
+ */
+function SkillViewerCacheSync() {
+	useSkillViewerCacheSync();
+
+	return null;
 }
 
 /**

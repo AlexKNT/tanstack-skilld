@@ -120,7 +120,7 @@ export function PublishSkillForm() {
 			slug: skill.slug,
 		});
 
-		await queryClient.invalidateQueries({ queryKey: skillKeys.cards() });
+		await queryClient.invalidateQueries({ queryKey: skillKeys.all });
 		await navigate({ to: "/skills/$slug", params: { slug: skill.slug } });
 	}
 
