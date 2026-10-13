@@ -22,7 +22,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 4 | Signed in area | Slice 3 | in-progress |
 | 5 | Upvotes | Slice 4 | in-progress |
 | 6 | Search and filter | Slice 5 | in-progress |
-| 7 | Moderation | Slice 6 | planned |
+| 7 | Moderation | Slice 6 | in-progress |
 | 8 | SEO metadata and sitemap | Hardening | planned |
 | 9 | Cookie notice and legal pages | Hardening | planned |
 | 10 | Deploy | Ship | planned |
@@ -148,10 +148,18 @@ spec [0008](../specs/0008-search-and-filter/index.md)
 
 ## Slice 6: Keep it tidy
 
-### 7. Moderation · needs a decision
+### 7. Moderation · in-progress
 An owner or an admin can hide a skill that breaks the rules, and a hidden skill leaves the public catalogue.
 **Done when:** an authorised user can hide and restore a skill, and a hidden skill never appears in the public list or on its detail page.
-- [ ] Design it (spec): `/architect moderation`
+- [x] Design it (spec): `/architect moderation`
+- [ ] Build it: `/develop moderation`
+  - [ ] The state and the store: the migration, the visibility write with its authority inside the filter, and the public reads closed (AC-1, AC-2, AC-5, AC-7, AC-8, AC-9, AC-10)
+  - [ ] The thin thread: the write, the author check, and one hide control on the owner's own card, on real data (AC-3, AC-4, AC-13, AC-19)
+  - [ ] The admin role and the admin area: the Clerk metadata role, the guarded `/admin/skills` list, and its filter (AC-6, AC-16, AC-17, AC-18)
+  - [ ] The author's surfaces: the hidden badge with the reason, the two counts, the restore rules, the hidden state on the edit form (AC-11, AC-12, AC-14, AC-15)
+  - [ ] The polish pass: the shared dialog, the messages, the announcements, the cache settling, the event, and the accessibility walk (AC-20, AC-21, AC-22)
+- [ ] Verify it: `/check verify moderation`
+spec [0009](../specs/0009-moderation/index.md)
 
 ## Hardening
 
@@ -179,6 +187,7 @@ Out of scope for this build pass, kept so the plan stays honest.
 - **Theme switcher**: let a visitor pick light or dark, with the choice remembered · from spec 0002 · needs a decision
 - **Upvoted skills list**: a page in the account area listing the skills you upvoted · from spec 0007 · needs a decision
 - **Tag landing page**: one page per tag, listing the skills that carry it · from spec 0008 · needs a decision
+- **Report a skill**: a visitor flags a skill for an admin to review · from spec 0009 · needs a decision
 
 ## Legend
 
