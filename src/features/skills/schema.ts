@@ -1,5 +1,12 @@
 import { fail, ok, type Result } from "#/db/result";
+import { hasSearchTerm, MAX_TERM_LENGTH } from "./search";
 import { MAX_SLUG_LENGTH } from "./slug";
+import {
+	isStoredTag,
+	normalizeTag,
+	TAG_SHAPE_MESSAGE,
+	validateTags,
+} from "./tags";
 
 /** The failure codes a skill write can return, decided in spec 0003. */
 export type SkillFailureCode =
@@ -23,6 +30,7 @@ export type CreateSkillInput = {
 	summary?: unknown;
 	description?: unknown;
 	installUrl?: unknown;
+	tags?: unknown;
 };
 
 /** The payload `createSkill` works with once every field is known good. */
@@ -31,18 +39,28 @@ export type ValidatedSkillInput = {
 	summary: string;
 	description: string;
 	installUrl?: string;
+	tags: string[];
 };
 
 /** The page of skills a caller asked for, with the defaults already applied. */
 export type ListSkillsInput = {
 	limit?: unknown;
 	offset?: unknown;
+	term?: unknown;
+	tag?: unknown;
 };
 
-/** The page of skills `listSkills` works with once every value is known good. */
+/**
+ * The page of skills `listSkills` works with once every value is known good.
+ *
+ * `term` and `tag` are the catalogue's filter: a term that holds nothing a
+ * search could use is answered as no term at all rather than as a failure.
+ */
 export type ValidatedListInput = {
 	limit: number;
 	offset: number;
+	term?: string;
+	tag?: string;
 };
 
 /** The payload accepted by the `getSkillDetail` server function. */
@@ -171,7 +189,12 @@ export function validateCreateSkillInput(
 		return validationFailure("installUrl");
 	}
 
-	return ok({ name, summary, description, installUrl });
+	const tags = validateTags(input.tags);
+	if (!tags.ok) {
+		return tags;
+	}
+
+	return ok({ name, summary, description, installUrl, tags: tags.value });
 }
 
 /**
@@ -208,7 +231,65 @@ export function validateListSkillsInput(
 		return fail("VALIDATION_FAILED", "offset cannot be negative.", "offset");
 	}
 
-	return ok({ limit, offset });
+	const term = asFilterTerm(input.term);
+	if (!term.ok) {
+		return term;
+	}
+
+	const tag = asFilterTag(input.tag);
+	if (!tag.ok) {
+		return tag;
+	}
+
+	return ok({ limit, offset, term: term.value, tag: tag.value });
+}
+
+/**
+ * The term a filtered read works with: trimmed and capped, or nothing at all
+ * when the value holds no word a search could use. A value that is not text is
+ * refused rather than ignored, because this read is public and a caller that
+ * did not come through the address deserves a straight answer rather than a
+ * silently widened page.
+ */
+function asFilterTerm(
+	value: unknown,
+): Result<string | undefined, "VALIDATION_FAILED"> {
+	if (value === undefined) {
+		return ok(undefined);
+	}
+
+	if (typeof value !== "string") {
+		return fail("VALIDATION_FAILED", "term must be a search term.", "term");
+	}
+
+	const term = value.trim().slice(0, MAX_TERM_LENGTH);
+
+	return ok(hasSearchTerm(term) ? term : undefined);
+}
+
+/**
+ * The tag a filtered read works with: the stored form of the value, so a tag
+ * written with capitals filters exactly as the lower case one does, or a
+ * refusal when the value cannot be a tag at all.
+ */
+function asFilterTag(
+	value: unknown,
+): Result<string | undefined, "VALIDATION_FAILED"> {
+	if (value === undefined) {
+		return ok(undefined);
+	}
+
+	if (typeof value !== "string") {
+		return fail("VALIDATION_FAILED", "tag must be a tag value.", "tag");
+	}
+
+	const tag = normalizeTag(value);
+
+	if (!isStoredTag(tag)) {
+		return fail("VALIDATION_FAILED", TAG_SHAPE_MESSAGE, "tag");
+	}
+
+	return ok(tag);
 }
 
 /**

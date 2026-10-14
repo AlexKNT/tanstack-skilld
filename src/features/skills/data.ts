@@ -11,6 +11,7 @@ import {
 	insertUpvoteRow,
 	listSkillRows,
 	listSkillRowsByAuthor,
+	listSkillTagRows,
 	type SkillListRow,
 	skillRowExists,
 	updateSkillRow,
@@ -31,6 +32,7 @@ import {
 	validateSkillDetailInput,
 	validateUpdateSkillInput,
 } from "./schema";
+import { buildSearchQuery } from "./search";
 import { slugify, slugWithSuffix } from "./slug";
 
 /** How many clashing slugs to try before giving up on a derived name. */
@@ -47,6 +49,7 @@ export type SkillListItem = {
 	summary: string;
 	authorId: string | undefined;
 	installUrl: string | undefined;
+	tags: string[];
 	createdAt: Date;
 	upvoteCount: number;
 	viewerHasUpvoted: boolean;
@@ -92,10 +95,23 @@ export type SkillCard = {
 	name: string;
 	summary: string;
 	installUrl: string | undefined;
+	tags: string[];
 	createdAt: Date;
 	author: SkillAuthor | undefined;
 	upvoteCount: number;
 	viewerHasUpvoted: boolean;
+};
+
+/** What narrows the catalogue: a typed term, a chosen tag, or both. */
+export type CatalogueFilter = {
+	term?: string;
+	tag?: string;
+};
+
+/** One tag in use, with the number of skills carrying it. */
+export type SkillTag = {
+	tag: string;
+	count: number;
 };
 
 /** One page of cards, and whether a further page follows. */
@@ -119,12 +135,21 @@ export type SkillDetail = SkillCard & {
  * session here, never from the browser, and each card carries the skill's count
  * and the viewer's own vote.
  *
+ * Both filter inputs are optional and both are validated before they reach the
+ * store: the typed term is reduced to a bound query by the feature's own pure
+ * module, so no typing can reshape a statement, and the tag is compared in its
+ * stored form. With neither input the read returns exactly what it always has.
+ *
  * Public, and deliberately returns a failure rather than throwing, so the page
  * renders an error state instead of falling over.
  */
 export const listSkillCards = createServerFn({ method: "GET" })
-	.inputValidator((input: { limit?: number; offset?: number } | undefined) =>
-		validateListSkillsInput(input ?? {}),
+	.inputValidator(
+		(
+			input:
+				| { limit?: number; offset?: number; term?: string; tag?: string }
+				| undefined,
+		) => validateListSkillsInput(input ?? {}),
 	)
 	.handler(
 		async ({ data }): Promise<Result<SkillCardPage, SkillReadFailureCode>> => {
@@ -132,9 +157,14 @@ export const listSkillCards = createServerFn({ method: "GET" })
 				return data;
 			}
 
-			const { limit, offset } = data.value;
+			const { limit, offset, term, tag } = data.value;
 			const viewerId = await currentViewerId();
-			const rows = await listSkillRows(limit + 1, offset, viewerId);
+			const searchQuery =
+				term === undefined ? undefined : buildSearchQuery(term);
+			const rows = await listSkillRows(limit + 1, offset, viewerId, {
+				searchQuery,
+				tag,
+			});
 			if (!rows.ok) {
 				return rows;
 			}
@@ -149,6 +179,25 @@ export const listSkillCards = createServerFn({ method: "GET" })
 			});
 		},
 	);
+
+/**
+ * Reads the tags actually in use, each with the number of skills carrying it,
+ * most used first.
+ *
+ * Public, like the catalogue beside it. The row behind the catalogue's chips is
+ * the only source of a tag a visitor may pick, so a chip can never lead to an
+ * empty result.
+ */
+export const listSkillTags = createServerFn({ method: "GET" }).handler(
+	async (): Promise<Result<{ items: SkillTag[] }, "SKILLS_QUERY_FAILED">> => {
+		const rows = await listSkillTagRows();
+		if (!rows.ok) {
+			return rows;
+		}
+
+		return ok({ items: rows.value });
+	},
+);
 
 /**
  * Reads one skill by its slug, for the detail page.
@@ -189,6 +238,7 @@ export const getSkillDetail = createServerFn({ method: "GET" })
 				summary: row.summary,
 				description: row.description,
 				installUrl: row.installUrl ?? undefined,
+				tags: row.tags,
 				updatedAt: row.updatedAt,
 				createdAt: row.createdAt,
 				author: authorId === undefined ? undefined : authors.get(authorId),
@@ -209,6 +259,7 @@ function toCard(
 		name: row.name,
 		summary: row.summary,
 		installUrl: row.installUrl,
+		tags: row.tags,
 		createdAt: row.createdAt,
 		author: row.authorId === undefined ? undefined : authors.get(row.authorId),
 		upvoteCount: row.upvoteCount,
@@ -366,6 +417,7 @@ export type CreatedSkill = {
 	description: string;
 	installUrl: string | undefined;
 	authorId: string | undefined;
+	tags: string[];
 	createdAt: Date;
 };
 
@@ -416,6 +468,7 @@ async function saveSkill(
 			description: values.description,
 			installUrl: values.installUrl,
 			authorId,
+			tags: values.tags,
 		});
 
 		if (!inserted.ok) {
@@ -434,6 +487,7 @@ async function saveSkill(
 					description: row.description,
 					installUrl: row.installUrl ?? undefined,
 					authorId: row.authorId ?? undefined,
+					tags: row.tags,
 					createdAt: row.createdAt,
 				},
 			};
@@ -475,7 +529,7 @@ export type ManagedSkillPage = {
 	hasMore: boolean;
 };
 
-/** One skill as the edit form reads it, ready to prefill the four fields. */
+/** One skill as the edit form reads it, ready to prefill the collected fields. */
 export type MySkill = {
 	id: string;
 	slug: string;
@@ -483,6 +537,7 @@ export type MySkill = {
 	summary: string;
 	description: string;
 	installUrl: string | undefined;
+	tags: string[];
 	createdAt: Date;
 	updatedAt: Date;
 };
@@ -495,6 +550,7 @@ function toMySkill(row: {
 	summary: string;
 	description: string;
 	installUrl: string | null;
+	tags: string[];
 	createdAt: Date;
 	updatedAt: Date;
 }): MySkill {
@@ -505,6 +561,7 @@ function toMySkill(row: {
 		summary: row.summary,
 		description: row.description,
 		installUrl: row.installUrl ?? undefined,
+		tags: row.tags,
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
 	};
@@ -622,6 +679,7 @@ export const updateSkill = createServerFn({ method: "POST" })
 				summary: validated.value.summary,
 				description: validated.value.description,
 				installUrl: validated.value.installUrl,
+				tags: validated.value.tags,
 			});
 
 			if (!updated.ok) {

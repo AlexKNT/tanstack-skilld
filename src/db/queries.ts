@@ -1,4 +1,12 @@
-import { and, asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	getTableColumns,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 
 import { getDatabase } from "./client.server";
 import { fail, ok, type Result } from "./result";
@@ -8,7 +16,8 @@ import { skills, skillUpvotes } from "./schema";
 /**
  * One row as the catalogue reads it. The snake case columns are renamed here
  * once, so no caller has to know the store's naming. The two vote columns ride
- * along with the skill, so a card needs no second request to place its button.
+ * along with the skill, so a card needs no second request to place its button,
+ * and the tags ride along the same way.
  */
 export type SkillListRow = {
 	id: string;
@@ -17,9 +26,31 @@ export type SkillListRow = {
 	summary: string;
 	authorId: string | undefined;
 	installUrl: string | undefined;
+	tags: string[];
 	createdAt: Date;
 	upvoteCount: number;
 	viewerHasUpvoted: boolean;
+};
+
+/**
+ * What narrows a page of skills, both parts optional.
+ *
+ * `searchQuery` is the store query text the feature's own pure module built from
+ * the typed term (`src/features/skills/search.ts`); it is bound as a value here
+ * rather than pasted into a statement, and it is never built in this layer. The
+ * tag is already the stored form.
+ */
+export type SkillRowFilter = {
+	searchQuery?: string;
+	tag?: string;
+};
+
+/**
+ * One tag in use, with how many skills carry it.
+ */
+export type SkillTagCount = {
+	tag: string;
+	count: number;
 };
 
 /**
@@ -43,6 +74,7 @@ function toListRow(row: {
 	summary: string;
 	authorId: string | null;
 	installUrl: string | null;
+	tags: string[];
 	createdAt: Date;
 	upvoteCount: number;
 	viewerHasUpvoted: boolean;
@@ -54,6 +86,7 @@ function toListRow(row: {
 		summary: row.summary,
 		authorId: row.authorId ?? undefined,
 		installUrl: row.installUrl ?? undefined,
+		tags: row.tags,
 		createdAt: row.createdAt,
 		upvoteCount: row.upvoteCount,
 		viewerHasUpvoted: row.viewerHasUpvoted,
@@ -169,20 +202,52 @@ function upvoteRead(viewerId: string | undefined) {
 }
 
 /**
- * Reads a page of skills, newest first, with each skill's vote count and
- * whether the given viewer has voted for it.
+ * The conditions a filter adds to a page read, one per present part.
+ *
+ * A term is matched against the store's own search document through the query
+ * text built for it, and a tag through the stored list, so both arrive as bound
+ * values and neither can reshape the statement. Nothing here builds a query
+ * from raw input: the text comes from the feature's pure search module.
+ */
+function filterConditions(filter: SkillRowFilter | undefined): SQL[] {
+	if (filter === undefined) {
+		return [];
+	}
+
+	const conditions: SQL[] = [];
+
+	if (filter.searchQuery !== undefined) {
+		conditions.push(
+			sql`${skills.searchDocument} @@ to_tsquery('english', ${filter.searchQuery})`,
+		);
+	}
+
+	if (filter.tag !== undefined) {
+		conditions.push(sql`${skills.tags} @> array[${filter.tag}]::text[]`);
+	}
+
+	return conditions;
+}
+
+/**
+ * Reads a page of skills, newest first, with each skill's tag list, its vote
+ * count, and whether the given viewer has voted for it.
  *
  * The order is by creation time and then by id, so two skills saved in the same
- * millisecond still come back in a stable order. Anything unexpected is turned
- * into a returned failure here, so no caller has to catch a driver error.
+ * millisecond still come back in a stable order. The order, the bound and the
+ * "one extra row" rule are the same whether or not a filter is present.
+ * Anything unexpected is turned into a returned failure here, so no caller has
+ * to catch a driver error.
  */
 export async function listSkillRows(
 	limit: number,
 	offset: number,
 	viewerId?: string,
+	filter?: SkillRowFilter,
 ): Promise<Result<SkillListRow[], "SKILLS_QUERY_FAILED">> {
 	try {
 		const votes = upvoteRead(viewerId);
+		const conditions = filterConditions(filter);
 
 		const rows = await getDatabase()
 			.select({
@@ -192,11 +257,13 @@ export async function listSkillRows(
 				summary: skills.summary,
 				authorId: skills.authorId,
 				installUrl: skills.installUrl,
+				tags: skills.tags,
 				createdAt: skills.createdAt,
 				...votes.columns,
 			})
 			.from(skills)
 			.leftJoin(votes.counts, eq(votes.counts.skillId, skills.id))
+			.where(conditions.length === 0 ? undefined : and(...conditions))
 			.orderBy(desc(skills.createdAt), desc(skills.id))
 			.limit(limit)
 			.offset(offset);
@@ -205,6 +272,35 @@ export async function listSkillRows(
 	} catch (error) {
 		console.error("[skills] listSkills query failed", error);
 		return fail("SKILLS_QUERY_FAILED", "The catalogue could not be loaded.");
+	}
+}
+
+/**
+ * Reads every tag in use with the number of skills carrying it, most used
+ * first and ties broken by the tag itself so the order is stable across reads.
+ *
+ * This is the one read of the feature that is not bounded by a page: it
+ * aggregates the whole tag column, so it is bounded by the number of distinct
+ * tags rather than by the number of skills. That is acceptable at this size and
+ * is written down rather than implied (spec 0008).
+ */
+export async function listSkillTagRows(): Promise<
+	Result<SkillTagCount[], "SKILLS_QUERY_FAILED">
+> {
+	try {
+		const rows = await getDatabase()
+			.select({
+				tag: sql<string>`tag`.as("tag"),
+				count: sql<number>`count(*)::int`.as("count"),
+			})
+			.from(sql`${skills}, unnest(${skills.tags}) as tag`)
+			.groupBy(sql`tag`)
+			.orderBy(sql`count(*) desc, tag asc`);
+
+		return ok(rows);
+	} catch (error) {
+		console.error("[skills] listSkillTags query failed", error);
+		return fail("SKILLS_QUERY_FAILED", "The tags could not be loaded.");
 	}
 }
 
@@ -224,6 +320,7 @@ export async function insertSkillWithSlug(
 		description: string;
 		installUrl?: string;
 		authorId?: string;
+		tags?: string[];
 		createdAt?: Date;
 	},
 ): Promise<Result<Skill | undefined, "SKILLS_WRITE_FAILED">> {
@@ -237,6 +334,7 @@ export async function insertSkillWithSlug(
 				description: values.description,
 				installUrl: values.installUrl ?? null,
 				authorId: values.authorId ?? null,
+				tags: values.tags ?? [],
 				createdAt: values.createdAt,
 				updatedAt: values.createdAt,
 			})
@@ -492,10 +590,11 @@ export async function findSkillRowForAuthor(
 }
 
 /**
- * Updates the four editable fields of an author's skill.
+ * Updates the editable fields of an author's skill.
  *
  * The ownership check is part of the `where` clause, so the write is atomic:
- * a mismatch updates nothing and the caller gets `undefined`. `updated_at` is
+ * a mismatch updates nothing and the caller gets `undefined`. The tag list is
+ * replaced wholesale, the way the form collects it. `updated_at` is
  * deliberately not set here, the database trigger owns it.
  */
 export async function updateSkillRow(
@@ -506,6 +605,7 @@ export async function updateSkillRow(
 		summary: string;
 		description: string;
 		installUrl?: string;
+		tags: string[];
 	},
 ): Promise<Result<Skill | undefined, "SKILLS_WRITE_FAILED">> {
 	try {
@@ -516,6 +616,7 @@ export async function updateSkillRow(
 				summary: values.summary,
 				description: values.description,
 				installUrl: values.installUrl ?? null,
+				tags: values.tags,
 			})
 			.where(and(eq(skills.slug, slug), eq(skills.authorId, authorId)))
 			.returning();
