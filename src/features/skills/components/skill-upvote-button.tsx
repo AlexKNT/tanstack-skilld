@@ -2,6 +2,7 @@ import { useUser } from "@clerk/tanstack-react-start";
 import { usePostHog } from "@posthog/react";
 import {
 	type InfiniteData,
+	type QueryKey,
 	useMutation,
 	useQueryClient,
 } from "@tanstack/react-query";
@@ -37,7 +38,10 @@ type SkillDetailResult = Result<SkillDetail, SkillReadFailureCode>;
 
 /** The cache as it stood before a click, put back if the write fails. */
 type UpvoteSnapshot = {
-	cards: InfiniteData<SkillCardsResult, number> | undefined;
+	/** Every cached catalogue page set, because the card may sit in any of them. */
+	cards: ReadonlyArray<
+		readonly [QueryKey, InfiniteData<SkillCardsResult, number> | undefined]
+	>;
 	detail: SkillDetailResult | undefined;
 };
 
@@ -133,12 +137,16 @@ export function SkillUpvoteButton({
 	const [failure, setFailure] = useState<string | undefined>(undefined);
 	const [announcement, setAnnouncement] = useState("");
 
-	const cardsKey = skillKeys.cards(viewerId);
+	// The card may sit on an unfiltered page or on any filtered one, so a vote
+	// moves every cached catalogue page set for this viewer rather than one key.
+	const cardsFamilyKey = skillKeys.cardsFamily(viewerId);
 	const detailKey = skillKeys.detail(skill.slug, viewerId);
 
 	function restore(snapshot: UpvoteSnapshot): void {
-		if (snapshot.cards !== undefined) {
-			queryClient.setQueryData(cardsKey, snapshot.cards);
+		for (const [key, data] of snapshot.cards) {
+			if (data !== undefined) {
+				queryClient.setQueryData(key, data);
+			}
 		}
 
 		if (snapshot.detail !== undefined) {
@@ -154,10 +162,9 @@ export function SkillUpvoteButton({
 			setAnnouncement("");
 
 			const snapshot: UpvoteSnapshot = {
-				cards:
-					queryClient.getQueryData<InfiniteData<SkillCardsResult, number>>(
-						cardsKey,
-					),
+				cards: queryClient.getQueriesData<
+					InfiniteData<SkillCardsResult, number>
+				>({ queryKey: cardsFamilyKey }),
 				detail: queryClient.getQueryData<SkillDetailResult>(detailKey),
 			};
 
@@ -167,12 +174,10 @@ export function SkillUpvoteButton({
 				upvoteCount: Math.max(0, skill.upvoteCount + moved),
 			};
 
-			if (snapshot.cards !== undefined) {
-				queryClient.setQueryData(
-					cardsKey,
-					cardsWithUpvote(snapshot.cards, skill.id, optimistic),
-				);
-			}
+			queryClient.setQueriesData<InfiniteData<SkillCardsResult, number>>(
+				{ queryKey: cardsFamilyKey },
+				(current) => cardsWithUpvote(current, skill.id, optimistic),
+			);
 
 			if (snapshot.detail !== undefined) {
 				queryClient.setQueryData(
@@ -198,12 +203,10 @@ export function SkillUpvoteButton({
 
 			const settled = result.value;
 
-			if (snapshot.cards !== undefined) {
-				queryClient.setQueryData(
-					cardsKey,
-					cardsWithUpvote(snapshot.cards, skill.id, settled),
-				);
-			}
+			queryClient.setQueriesData<InfiniteData<SkillCardsResult, number>>(
+				{ queryKey: cardsFamilyKey },
+				(current) => cardsWithUpvote(current, skill.id, settled),
+			);
 
 			if (snapshot.detail !== undefined) {
 				queryClient.setQueryData(
@@ -229,7 +232,7 @@ export function SkillUpvoteButton({
 			setFailure(UPVOTE_FAILED_MESSAGE);
 		},
 		onSettled: () => {
-			void queryClient.invalidateQueries({ queryKey: cardsKey });
+			void queryClient.invalidateQueries({ queryKey: cardsFamilyKey });
 			void queryClient.invalidateQueries({ queryKey: detailKey });
 		},
 	});
