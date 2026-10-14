@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
 	check,
+	customType,
 	index,
 	pgTable,
 	primaryKey,
@@ -11,6 +12,17 @@ import {
 } from "drizzle-orm/pg-core";
 
 /**
+ * The store's own stored search document, which the ORM has no built in type
+ * for. The application never writes it: it is a generated column, so the store
+ * keeps it in step with the row it describes.
+ */
+const tsvector = customType<{ data: string }>({
+	dataType() {
+		return "tsvector";
+	},
+});
+
+/**
  * The published skills.
  *
  * The publisher is held as a Clerk user id and nothing else, so Clerk stays the
@@ -18,6 +30,14 @@ import {
  * rather than to a form (slug uniqueness, the length ceilings on `name` and
  * `summary`, the ordering of the timestamps) are declared here so a future
  * import obeys them too.
+ *
+ * The tag list is normalized by `src/features/skills/tags.ts` before it is
+ * written, and the check below is the second line of defence: a future import
+ * that never ran a form still cannot store a tag the rule would refuse.
+ *
+ * `skills_tags_valid` is a small immutable function created by the migration
+ * (a check constraint cannot walk a list on its own), so the generated SQL is
+ * hand edited once to create it before the constraint that calls it.
  */
 export const skills = pgTable(
 	"skills",
@@ -29,6 +49,10 @@ export const skills = pgTable(
 		description: text("description").notNull(),
 		installUrl: text("install_url"),
 		authorId: text("author_id"),
+		tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+		searchDocument: tsvector("search_document").generatedAlwaysAs(
+			sql`to_tsvector('english', "name" || ' ' || "summary" || ' ' || "description")`,
+		),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -43,6 +67,12 @@ export const skills = pgTable(
 			table.authorId,
 			table.updatedAt.desc(),
 			table.id.desc(),
+		),
+		index("skills_tags_idx").using("gin", table.tags),
+		index("skills_search_idx").using("gin", table.searchDocument),
+		check(
+			"skills_tags_check",
+			sql`cardinality(${table.tags}) <= 5 and skills_tags_valid(${table.tags})`,
 		),
 		check(
 			"skills_slug_lowercase_url_safe",
