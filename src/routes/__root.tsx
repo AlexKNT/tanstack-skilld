@@ -14,6 +14,7 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import type { CaptureResult } from "posthog-js";
 import { useEffect, useRef } from "react";
 import { SiteHeader } from "#/components/site-header";
 import { readViewerId } from "#/features/skills/data";
@@ -99,6 +100,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				capture_exceptions: true,
 				debug: import.meta.env.DEV,
 				defaults: "2025-05-24",
+				before_send: withoutSearchTerm,
 				logs: {
 					serviceName: "skild-web",
 					environment: import.meta.env.MODE,
@@ -110,6 +112,44 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</PostHogErrorBoundary>
 		</PostHogProvider>
 	);
+}
+
+/**
+ * Drops the catalogue's search term from the properties every event carries.
+ *
+ * The filter lives in the address, so a typed term would ride along on every
+ * event as part of the automatic `$current_url`, which is exactly what the
+ * filter's own event is careful never to send (spec 0008's security model says
+ * nothing a person types leaves the app for an analytics service). Only `q` is
+ * removed; the rest of the address, including the tag, is left alone.
+ */
+function withoutSearchTerm(event: CaptureResult | null): CaptureResult | null {
+	if (event === null) {
+		return null;
+	}
+
+	const currentUrl = event.properties.$current_url;
+
+	if (typeof currentUrl !== "string") {
+		return event;
+	}
+
+	try {
+		const url = new URL(currentUrl);
+
+		if (!url.searchParams.has("q")) {
+			return event;
+		}
+
+		url.searchParams.delete("q");
+
+		return {
+			...event,
+			properties: { ...event.properties, $current_url: url.toString() },
+		};
+	} catch {
+		return event;
+	}
 }
 
 function RootContent({ children }: { children: React.ReactNode }) {

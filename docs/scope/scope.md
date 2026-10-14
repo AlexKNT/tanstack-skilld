@@ -137,14 +137,14 @@ spec [0007](../specs/0007-upvotes/index.md) · code in `src/db/schema.ts`, `src/
 Narrow the catalogue by text and by tag, with the choice in the URL so a filtered view can be shared.
 **Done when:** the list filters as the user types or picks a tag, the URL carries the filter, and an empty result renders a helpful state.
 - [x] Design it (spec): `/architect search and filter`
-- [ ] Build it: `/develop search and filter`
-  - [ ] The store change and the shared tag rule (AC-1, AC-2, AC-7)
-  - [ ] The filter end to end: the read takes a term and a tag, and the address carries both (AC-5, AC-6, AC-8, AC-10)
-  - [ ] Tags end to end: both forms collect them, and the cards and the detail page show them (AC-3, AC-4)
-  - [ ] The filter's interface: the box, the chips, the pacing, the empty surface and the announcement (AC-9, AC-11, AC-12, AC-13, AC-15)
-  - [ ] The event, the accessibility pass and the boundary check (AC-13, AC-14, AC-16)
+- [x] Build it: `/develop search and filter`
+  - [x] The store change and the shared tag rule (AC-1, AC-2, AC-7)
+  - [x] The filter end to end: the read takes a term and a tag, and the address carries both (AC-5, AC-6, AC-8, AC-10)
+  - [x] Tags end to end: both forms collect them, and the cards and the detail page show them (AC-3, AC-4)
+  - [x] The filter's interface: the box, the chips, the pacing, the empty surface and the announcement (AC-9, AC-11, AC-12, AC-13, AC-15)
+  - [x] The event, the accessibility pass and the boundary check (AC-13, AC-14, AC-16)
 - [ ] Verify it: `/check verify search and filter`
-spec [0008](../specs/0008-search-and-filter/index.md)
+spec [0008](../specs/0008-search-and-filter/index.md) · code in `src/features/skills/`, `src/hooks/`, `src/db/schema.ts`, `src/db/queries.ts`, `src/routes/index.tsx`, `drizzle/`
 
 ## Slice 6: Keep it tidy
 
