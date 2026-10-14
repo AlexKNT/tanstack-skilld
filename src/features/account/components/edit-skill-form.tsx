@@ -31,13 +31,23 @@ import {
 	MAX_SKILL_NAME_LENGTH,
 	MAX_SKILL_SUMMARY_LENGTH,
 } from "#/features/skills/schema";
+import { parseTagList, TAG_FIELD_HINT } from "#/features/skills/tags";
 import { DeleteSkillDialog } from "./delete-skill-dialog";
 
-const FIELD_ORDER = ["name", "summary", "description", "installUrl"] as const;
+const FIELD_ORDER = [
+	"name",
+	"summary",
+	"description",
+	"installUrl",
+	"tags",
+] as const;
 
 type FieldName = (typeof FIELD_ORDER)[number];
 
 type FormValues = Record<FieldName, string>;
+
+/** The longest a comma separated tag field can usefully be, in characters. */
+const MAX_TAG_FIELD_LENGTH = 400;
 
 function initialValues(skill: MySkill): FormValues {
 	return {
@@ -45,6 +55,7 @@ function initialValues(skill: MySkill): FormValues {
 		summary: skill.summary,
 		description: skill.description,
 		installUrl: skill.installUrl ?? "",
+		tags: skill.tags.join(", "),
 	};
 }
 
@@ -87,7 +98,13 @@ export function EditSkillForm({ skill }: { skill: MySkill }) {
 
 	const mutation = useMutation({
 		mutationFn: (payload: FormValues) =>
-			updateSkill({ data: { slug: skill.slug, ...payload } }),
+			updateSkill({
+				data: {
+					...payload,
+					slug: skill.slug,
+					tags: parseTagList(payload.tags),
+				},
+			}),
 		onSuccess: async (result) => {
 			setSubmitted(true);
 
@@ -294,6 +311,26 @@ export function EditSkillForm({ skill }: { skill: MySkill }) {
 								}
 								type="url"
 								value={values.installUrl}
+							/>
+						)}
+					</PublishFormField>
+
+					<PublishFormField
+						error={fieldErrors.tags}
+						hint={TAG_FIELD_HINT}
+						id={`${formId}-tags`}
+						label="Tags"
+					>
+						{(describedBy, invalid) => (
+							<input
+								aria-describedby={describedBy}
+								aria-invalid={invalid}
+								className={publishFieldControlClass}
+								id={`${formId}-tags`}
+								maxLength={MAX_TAG_FIELD_LENGTH}
+								name="tags"
+								onChange={(event) => handleChange("tags", event.target.value)}
+								value={values.tags}
 							/>
 						)}
 					</PublishFormField>

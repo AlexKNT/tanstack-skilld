@@ -15,6 +15,7 @@ import { SkillAuthorBlock } from "#/features/skills/components/skill-author";
 import { SkillInstallButton } from "#/features/skills/components/skill-install-button";
 import { SkillMarkdown } from "#/features/skills/components/skill-markdown";
 import { SkillReadError } from "#/features/skills/components/skill-read-error";
+import { SkillTagList } from "#/features/skills/components/skill-tag-list";
 import { SkillUpvoteButton } from "#/features/skills/components/skill-upvote-button";
 import { formatSkillDate } from "#/features/skills/date";
 import { skillDetailQueryOptions } from "#/features/skills/query";
@@ -71,6 +72,7 @@ function SkillDetailPage() {
 					<p className="max-w-3xl text-lg text-muted-foreground">
 						{skill.summary}
 					</p>
+					<SkillTagList tags={skill.tags} />
 					<div className="flex flex-wrap items-center justify-between gap-4">
 						<div className="flex flex-wrap items-center gap-3">
 							{skill.author === undefined ? null : (

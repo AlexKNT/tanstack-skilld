@@ -17,17 +17,24 @@ import {
 	MAX_SKILL_NAME_LENGTH,
 	MAX_SKILL_SUMMARY_LENGTH,
 } from "#/features/skills/schema";
+import { parseTagList, TAG_FIELD_HINT } from "#/features/skills/tags";
 import {
 	PublishFormField,
 	publishFieldControlClass,
 } from "./publish-form-field";
 
-/** The four fields the form collects, in the order they are rendered. */
-const FIELD_ORDER = ["name", "summary", "description", "installUrl"] as const;
+/** The fields the form collects, in the order they are rendered. */
+const FIELD_ORDER = [
+	"name",
+	"summary",
+	"description",
+	"installUrl",
+	"tags",
+] as const;
 
 type FieldName = (typeof FIELD_ORDER)[number];
 
-/** The trimmed values the form sends, and the field each one belongs to. */
+/** The values the form sends, and the field each one belongs to. */
 type FormValues = Record<FieldName, string>;
 
 const EMPTY_VALUES: FormValues = {
@@ -35,7 +42,11 @@ const EMPTY_VALUES: FormValues = {
 	summary: "",
 	description: "",
 	installUrl: "",
+	tags: "",
 };
+
+/** The longest a comma separated tag field can usefully be, in characters. */
+const MAX_TAG_FIELD_LENGTH = 400;
 
 /** The field's message when the server refused that value. */
 type FieldErrors = Partial<Record<FieldName, string>>;
@@ -87,7 +98,8 @@ export function PublishSkillForm() {
 	}, [posthog]);
 
 	const mutation = useMutation({
-		mutationFn: (payload: FormValues) => createSkill({ data: payload }),
+		mutationFn: (payload: FormValues) =>
+			createSkill({ data: { ...payload, tags: parseTagList(payload.tags) } }),
 		onSuccess: async (result) => {
 			if (!result.ok) {
 				handleFailure(result);
@@ -297,6 +309,26 @@ export function PublishSkillForm() {
 								}
 								type="url"
 								value={values.installUrl}
+							/>
+						)}
+					</PublishFormField>
+
+					<PublishFormField
+						error={fieldErrors.tags}
+						hint={TAG_FIELD_HINT}
+						id={`${formId}-tags`}
+						label="Tags"
+					>
+						{(describedBy, invalid) => (
+							<input
+								aria-describedby={describedBy}
+								aria-invalid={invalid}
+								className={publishFieldControlClass}
+								id={`${formId}-tags`}
+								maxLength={MAX_TAG_FIELD_LENGTH}
+								name="tags"
+								onChange={(event) => handleChange("tags", event.target.value)}
+								value={values.tags}
 							/>
 						)}
 					</PublishFormField>

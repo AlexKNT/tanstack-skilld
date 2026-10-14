@@ -12,6 +12,7 @@ import type { SkillCard as SkillCardData } from "#/features/skills/data";
 import { formatSkillDate } from "#/features/skills/date";
 import { SkillAuthorBlock } from "./skill-author";
 import { SkillInstallButton } from "./skill-install-button";
+import { SkillTagList } from "./skill-tag-list";
 import { SkillUpvoteButton } from "./skill-upvote-button";
 
 /**
@@ -39,6 +40,7 @@ export function SkillCard({ skill }: { skill: SkillCardData }) {
 				<CardDescription className="line-clamp-3">
 					{skill.summary}
 				</CardDescription>
+				<SkillTagList className="mt-1" tags={skill.tags} />
 				<CardAction className="relative z-10">
 					<SkillInstallButton installUrl={skill.installUrl} />
 				</CardAction>
