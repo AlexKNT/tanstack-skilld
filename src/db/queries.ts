@@ -600,21 +600,36 @@ export async function listSkillRowsByAuthor(
 }
 
 /**
- * Counts an author's skills.
+ * Counts an author's skills, split by the state they are in.
  *
- * A real `count(*)` rather than the length of a loaded page, so the overview
- * reports the total even when the list is paged.
+ * A real `count(*)` over the author's rows rather than the length of a loaded
+ * page, so the overview reports the totals even when the list is paged. The
+ * count the overview has always shown keeps its meaning (published); the hidden
+ * count is what an author has had taken off the catalogue, and the two are read
+ * together so they can never disagree with each other.
  */
 export async function countSkillRowsByAuthor(
 	authorId: string,
-): Promise<Result<number, "SKILLS_QUERY_FAILED">> {
+): Promise<
+	Result<{ published: number; hidden: number }, "SKILLS_QUERY_FAILED">
+> {
 	try {
-		const [row] = await getDatabase()
-			.select({ count: sql<number>`count(*)::int` })
+		const rows = await getDatabase()
+			.select({
+				visibility: skills.visibility,
+				count: sql<number>`count(*)::int`,
+			})
 			.from(skills)
-			.where(eq(skills.authorId, authorId));
+			.where(eq(skills.authorId, authorId))
+			.groupBy(skills.visibility);
 
-		return ok(row?.count ?? 0);
+		const countOf = (visibility: SkillVisibility): number =>
+			rows.find((row) => row.visibility === visibility)?.count ?? 0;
+
+		return ok({
+			published: countOf("published"),
+			hidden: countOf("hidden"),
+		});
 	} catch (error) {
 		console.error("[skills] countSkillRowsByAuthor query failed", error);
 		return fail("SKILLS_QUERY_FAILED", "Your skill count could not be loaded.");

@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { countSkillRowsByAuthor } from "#/db/queries";
 import { fail, ok, type Result } from "#/db/result";
 
-/** The identity and count the account overview shows. */
+/** The identity and counts the account overview shows. */
 export type AccountOverview = {
 	user: {
 		fullName: string;
@@ -12,7 +12,10 @@ export type AccountOverview = {
 		primaryEmail: string | undefined;
 		joinedAt: Date;
 	};
+	/** The skills the catalogue shows under this author's name. */
 	skillCount: number;
+	/** The skills an author hid themselves, or an admin hid for them. */
+	hiddenSkillCount: number;
 };
 
 /** The failure codes the overview can return. */
@@ -66,7 +69,6 @@ export const getAccountOverview = createServerFn({ method: "GET" }).handler(
 		if (!count.ok) {
 			return count;
 		}
-
 		try {
 			const user = await clerkClient().users.getUser(userId);
 			const primaryEmail =
@@ -81,7 +83,8 @@ export const getAccountOverview = createServerFn({ method: "GET" }).handler(
 					primaryEmail,
 					joinedAt: new Date(user.createdAt),
 				},
-				skillCount: count.value,
+				skillCount: count.value.published,
+				hiddenSkillCount: count.value.hidden,
 			});
 		} catch (error) {
 			console.error("[account] clerk user lookup failed", error);

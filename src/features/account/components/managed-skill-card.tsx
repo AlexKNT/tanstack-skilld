@@ -1,31 +1,32 @@
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, EyeOff, Pencil } from "lucide-react";
+import { ExternalLink, Pencil } from "lucide-react";
 import { useState } from "react";
 
-import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
 import { VisibilityDialog } from "#/features/moderation/components/visibility-dialog";
 import type { ManagedSkillCard as ManagedSkillCardData } from "#/features/skills/data";
 import { formatSkillDate } from "#/features/skills/date";
-import { useSkillViewerId } from "#/features/skills/use-viewer";
+import { HiddenSkillNote } from "./hidden-skill-note";
 
 /**
  * One of the author's skills, as a management card: its name and summary, when
  * it was last updated, the two places it opens (its edit page, and its public
  * page), and the visibility control.
  *
- * A skill the viewer hid themselves may be restored here; one an admin hid may
- * not, and the card says so instead of offering a control that would be
- * refused. The outcome of a change is announced in the polite region below the
- * controls, because the dialog that made it closes on success.
+ * A hidden row says who hid it, when and why, because the reason an admin gives
+ * is written for the author to read. A skill the viewer hid themselves may be
+ * restored here; one an admin hid may not, and the card says so instead of
+ * offering a control that would be refused. The outcome of a change is
+ * announced in the polite region below the controls, because the dialog that
+ * made it closes on success.
  */
 export function ManagedSkillCard({ skill }: { skill: ManagedSkillCardData }) {
-	const viewerId = useSkillViewerId();
 	const [announcement, setAnnouncement] = useState("");
 	const hidden = skill.visibility === "hidden";
-	const hiddenByViewer = hidden && skill.moderatedBy === viewerId;
+	const moderation = skill.moderation;
+	const hiddenByViewer = hidden && moderation?.bySelf === true;
 
 	return (
 		<Card className="h-full">
@@ -45,15 +46,12 @@ export function ManagedSkillCard({ skill }: { skill: ManagedSkillCardData }) {
 					{skill.summary}
 				</p>
 				{hidden ? (
-					<p className="flex items-center gap-2 text-sm text-muted-foreground">
-						<Badge variant="secondary">
-							<EyeOff aria-hidden="true" />
-							Hidden
-						</Badge>
-						{hiddenByViewer
-							? "You hid this skill."
-							: "An admin hid this skill."}
-					</p>
+					<HiddenSkillNote
+						moderation={moderation}
+						note={
+							hiddenByViewer ? undefined : "An admin must restore it for you."
+						}
+					/>
 				) : null}
 			</CardHeader>
 			<CardFooter className="mt-auto flex-wrap gap-3 border-t pt-6">

@@ -14,6 +14,7 @@ import {
 	loadAuthors,
 	type SkillAuthor,
 } from "#/features/skills/authors.server";
+import { UNRESOLVED_ACTOR_NAME } from "./labels";
 import { readIsAdmin } from "./role";
 import {
 	type ListSkillsForModerationInput,
@@ -28,7 +29,7 @@ import {
 export type VisibilityChange = SkillVisibilityChange;
 
 /** The name shown for an actor Clerk no longer knows, so a row never fails. */
-export const UNRESOLVED_ACTOR_NAME = "A former member";
+export { UNRESOLVED_ACTOR_NAME };
 
 /** One row of the admin list, with everyone's name resolved. */
 export type ModerationItem = {

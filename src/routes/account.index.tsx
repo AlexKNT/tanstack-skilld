@@ -50,8 +50,9 @@ function OverviewPage() {
 		);
 	}
 
-	const { user, skillCount } = query.data.value;
+	const { user, skillCount, hiddenSkillCount } = query.data.value;
 	const skillWord = skillCount === 1 ? "skill" : "skills";
+	const hiddenWord = hiddenSkillCount === 1 ? "skill" : "skills";
 
 	return (
 		<section className="flex flex-col gap-8">
@@ -101,6 +102,14 @@ function OverviewPage() {
 								{skillCount} {skillWord}
 							</dd>
 						</div>
+						{hiddenSkillCount === 0 ? null : (
+							<div className="flex gap-2">
+								<dt className="font-medium text-foreground">Hidden</dt>
+								<dd>
+									{hiddenSkillCount} {hiddenWord}, not in the catalogue
+								</dd>
+							</div>
+						)}
 					</dl>
 				</CardContent>
 			</Card>

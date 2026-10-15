@@ -33,6 +33,7 @@ import {
 } from "#/features/skills/schema";
 import { parseTagList, TAG_FIELD_HINT } from "#/features/skills/tags";
 import { DeleteSkillDialog } from "./delete-skill-dialog";
+import { HiddenSkillNote } from "./hidden-skill-note";
 
 const FIELD_ORDER = [
 	"name",
@@ -73,6 +74,10 @@ function isFieldFailure(
  * The form keeps what was typed through every failure, maps a validation
  * failure back onto its field, and warns before an in app navigation would
  * throw away unsaved changes. The slug is never edited, it is the skill's URL.
+ *
+ * A save lands on the skill's public page, unless the skill is hidden: a hidden
+ * skill has no public page, so the author is returned to the list that shows
+ * the state they are in and the control that changes it.
  */
 export function EditSkillForm({ skill }: { skill: MySkill }) {
 	const posthog = usePostHog();
@@ -126,10 +131,11 @@ export function EditSkillForm({ skill }: { skill: MySkill }) {
 				queryKey: mySkillKeys.overview(),
 			});
 
-			await navigate({
-				to: "/skills/$slug",
-				params: { slug: skill.slug },
-			});
+			await navigate(
+				result.value.visibility === "hidden"
+					? { to: "/account/skills" }
+					: { to: "/skills/$slug", params: { slug: result.value.slug } },
+			);
 		},
 		onSettled: () => {
 			submittingRef.current = false;
@@ -173,6 +179,16 @@ export function EditSkillForm({ skill }: { skill: MySkill }) {
 		<Card>
 			<CardHeader>
 				<CardTitle>Skill details</CardTitle>
+				{skill.visibility === "hidden" ? (
+					<HiddenSkillNote
+						moderation={skill.moderation}
+						note={
+							skill.moderation?.bySelf === true
+								? "Saving changes leaves it hidden. Restore it from your skills list."
+								: "Saving changes leaves it hidden. An admin must restore it."
+						}
+					/>
+				) : null}
 			</CardHeader>
 			<CardContent>
 				<form

@@ -18,6 +18,7 @@ import {
 } from "#/db/queries";
 import { fail, ok, type Result } from "#/db/result";
 import type { SkillVisibility } from "#/db/schema";
+import { UNRESOLVED_ACTOR_NAME } from "#/features/moderation/labels";
 import { loadAuthors, type SkillAuthor } from "./authors.server";
 import {
 	type CreateSkillInput,
@@ -467,6 +468,22 @@ export type SkillManageFailureCode =
 	| "SKILLS_QUERY_FAILED"
 	| "SKILLS_WRITE_FAILED";
 
+/**
+ * The last hide or restore on a skill, as a signed in surface reads it.
+ *
+ * `bySelf` is settled on the server against the session user id so the client
+ * never handles an actor id, and `actor` is already resolved to a name.
+ */
+export type SkillModerationRecord = {
+	/** Whether the viewer performed it, which decides whether they may undo it. */
+	bySelf: boolean;
+	/** The actor's name, or one neutral label when Clerk no longer knows them. */
+	actor: string;
+	at: Date;
+	/** The reason the current hide was made for, cleared by a restore. */
+	reason: string | undefined;
+};
+
 /** One management card: enough to link to the edit page and the public page. */
 export type ManagedSkillCard = {
 	id: string;
@@ -475,11 +492,8 @@ export type ManagedSkillCard = {
 	summary: string;
 	updatedAt: Date;
 	visibility: SkillVisibility;
-	/** Who performed the last hide or restore, or nothing when none was performed. */
-	moderatedBy: string | undefined;
-	moderatedAt: Date | undefined;
-	/** The reason the current hide was made for, cleared by a restore. */
-	reason: string | undefined;
+	/** The last hide or restore, or nothing when none was performed. */
+	moderation: SkillModerationRecord | undefined;
 };
 
 /** One page of management cards, and whether a further page follows. */
@@ -497,22 +511,73 @@ export type MySkill = {
 	description: string;
 	installUrl: string | undefined;
 	tags: string[];
+	/** Whether the skill is in the catalogue or held back, and why. */
+	visibility: SkillVisibility;
+	moderation: SkillModerationRecord | undefined;
 	createdAt: Date;
 	updatedAt: Date;
 };
 
+/** A stored row's moderation columns, as either signed in read hands them over. */
+type ModerationColumns = {
+	moderatedBy: string | null | undefined;
+	moderatedAt: Date | null | undefined;
+	/** The management read names this `reason`, the driver's own row does not. */
+	reason?: string | null;
+	moderationReason?: string | null;
+};
+
+/** Folds a stored row's moderation columns into one record for the viewer. */
+function toModerationRecord(
+	row: ModerationColumns,
+	viewerId: string,
+	authors: Map<string, SkillAuthor>,
+): SkillModerationRecord | undefined {
+	const { moderatedBy, moderatedAt } = row;
+	if (
+		typeof moderatedBy !== "string" ||
+		moderatedAt === null ||
+		moderatedAt === undefined
+	) {
+		return undefined;
+	}
+
+	return {
+		bySelf: moderatedBy === viewerId,
+		actor: authors.get(moderatedBy)?.name ?? UNRESOLVED_ACTOR_NAME,
+		at: moderatedAt,
+		reason: row.reason ?? row.moderationReason ?? undefined,
+	};
+}
+
+/** Reads the actor ids a page of rows refers to, without repeats. */
+function actorIdsOf(rows: readonly ModerationColumns[]): string[] {
+	return [
+		...new Set(
+			rows
+				.map((row) => row.moderatedBy)
+				.filter((id): id is string => typeof id === "string"),
+		),
+	];
+}
+
 /** Folds a stored row into the shape the edit form works with. */
-function toMySkill(row: {
-	id: string;
-	slug: string;
-	name: string;
-	summary: string;
-	description: string;
-	installUrl: string | null;
-	tags: string[];
-	createdAt: Date;
-	updatedAt: Date;
-}): MySkill {
+function toMySkill(
+	row: {
+		id: string;
+		slug: string;
+		name: string;
+		summary: string;
+		description: string;
+		installUrl: string | null;
+		tags: string[];
+		createdAt: Date;
+		updatedAt: Date;
+		visibility: SkillVisibility;
+	} & ModerationColumns,
+	viewerId: string,
+	authors: Map<string, SkillAuthor>,
+): MySkill {
 	return {
 		id: row.id,
 		slug: row.slug,
@@ -521,6 +586,8 @@ function toMySkill(row: {
 		description: row.description,
 		installUrl: row.installUrl ?? undefined,
 		tags: row.tags,
+		visibility: row.visibility,
+		moderation: toModerationRecord(row, viewerId, authors),
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
 	};
@@ -568,8 +635,22 @@ export const listMySkillCards = createServerFn({ method: "GET" })
 
 			const hasMore = rows.value.length > limit;
 			const pageRows = hasMore ? rows.value.slice(0, limit) : rows.value;
+			const authors = await loadAuthors(actorIdsOf(pageRows));
 
-			return ok({ items: pageRows, hasMore });
+			return ok({
+				items: pageRows.map(
+					(row): ManagedSkillCard => ({
+						id: row.id,
+						slug: row.slug,
+						name: row.name,
+						summary: row.summary,
+						updatedAt: row.updatedAt,
+						visibility: row.visibility,
+						moderation: toModerationRecord(row, userId, authors),
+					}),
+				),
+				hasMore,
+			});
 		},
 	);
 
@@ -609,7 +690,9 @@ async function loadOwnedSkill(
 		return NOT_FOUND;
 	}
 
-	return ok(toMySkill(found.value));
+	const authors = await loadAuthors(actorIdsOf([found.value]));
+
+	return ok(toMySkill(found.value, userId, authors));
 }
 
 /**
@@ -649,7 +732,9 @@ export const updateSkill = createServerFn({ method: "POST" })
 				return NOT_FOUND;
 			}
 
-			return ok(toMySkill(updated.value));
+			const authors = await loadAuthors(actorIdsOf([updated.value]));
+
+			return ok(toMySkill(updated.value, userId, authors));
 		},
 	);
 
