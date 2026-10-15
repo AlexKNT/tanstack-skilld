@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
 import { Card, CardFooter, CardHeader, CardTitle } from "#/components/ui/card";
 import { formatSkillDate } from "#/features/skills/date";
+import { useSkillViewerId } from "#/features/skills/use-viewer";
 import type { ModerationItem } from "../data";
 import { VisibilityDialog } from "./visibility-dialog";
 
@@ -24,7 +25,10 @@ export function ModerationSkillRow({
 	/** Where the row's outcome is announced: the page's region, not the row's. */
 	onAnnounce: (message: string) => void;
 }) {
+	const viewerId = useSkillViewerId();
 	const hidden = skill.visibility === "hidden";
+	const isOwnSkill =
+		skill.publisher !== undefined && skill.publisher.id === viewerId;
 
 	return (
 		<Card className="h-full">
@@ -79,6 +83,7 @@ export function ModerationSkillRow({
 				<div className="ml-auto flex flex-wrap gap-2">
 					<VisibilityDialog
 						action={hidden ? "restore" : "hide"}
+						actorRole={isOwnSkill ? "author" : "admin"}
 						name={skill.name}
 						onDone={(outcome) => onAnnounce(outcome.message)}
 						slug={skill.slug}

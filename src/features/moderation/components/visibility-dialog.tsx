@@ -15,8 +15,9 @@ import {
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { publishFieldControlClass } from "#/features/skills/components/publish-form-field";
+import { moderationFailureMessage } from "../messages";
 import { MAX_MODERATION_REASON_LENGTH } from "../schema";
-import { useSetVisibility } from "../use-visibility";
+import { type ModerationActorRole, useSetVisibility } from "../use-visibility";
 
 /** Which way the dialog moves a skill. */
 export type VisibilityAction = "hide" | "restore";
@@ -51,9 +52,10 @@ function changedMessage(
  *
  * It owns the call, so the author's own card and the admin list cannot drift
  * apart, and it stays open on a refusal with the message beside the control the
- * person just used. A hide takes an optional reason and shows it to nobody but
- * the author; a restore takes none, because a reason describes the hide it was
- * written for.
+ * person just used. Refusal wording comes from the one message map, so the same
+ * code never reads two ways. A hide takes an optional reason and shows it to
+ * nobody but the author; a restore takes none, because a reason describes the
+ * hide it was written for.
  *
  * The outcome is reported upwards rather than announced here: the dialog closes
  * on success, so the live region that speaks belongs to the surface behind it.
@@ -62,11 +64,14 @@ export function VisibilityDialog({
 	slug,
 	name,
 	action,
+	actorRole,
 	onDone,
 }: {
 	slug: string;
 	name: string;
 	action: VisibilityAction;
+	/** Whether the person pressing this is the skill's author or an admin. */
+	actorRole: ModerationActorRole;
 	onDone: (outcome: VisibilityOutcome) => void;
 }) {
 	const [open, setOpen] = useState(false);
@@ -87,11 +92,12 @@ export function VisibilityDialog({
 				slug,
 				visibility: hiding ? "hidden" : "published",
 				reason: reasonGiven ? submittedReason : undefined,
+				actorRole,
 			},
 			{
 				onSuccess: (result) => {
 					if (!result.ok) {
-						setFailure(result.message);
+						setFailure(moderationFailureMessage(result));
 						return;
 					}
 

@@ -77,6 +77,7 @@ export function ManagedSkillCard({ skill }: { skill: ManagedSkillCardData }) {
 					{hidden && !hiddenByViewer ? null : (
 						<VisibilityDialog
 							action={hidden ? "restore" : "hide"}
+							actorRole="author"
 							name={skill.name}
 							onDone={(outcome) => setAnnouncement(outcome.message)}
 							slug={skill.slug}
