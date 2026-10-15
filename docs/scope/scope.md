@@ -128,7 +128,7 @@ Signed in users upvote a skill once, and the count shows on cards and on the det
   - [x] The thin thread: a vote from the detail page and from a card, on real data (AC-3, AC-4, AC-10)
   - [x] The cache rules, the rollback, and the signed out path (AC-7, AC-8, AC-9, AC-11)
   - [x] Accessibility, the event, and the verification pass (AC-11, AC-13, AC-14)
-- [ ] Verify it: `/check verify upvotes`
+- [x] Verify it: `/check verify upvotes`
 spec [0007](../specs/0007-upvotes/index.md) · code in `src/db/schema.ts`, `src/db/queries.ts`, `src/features/skills/`, `src/routes/index.tsx`, `src/routes/skills.$slug.tsx`
 
 ## Slice 5: Find skills

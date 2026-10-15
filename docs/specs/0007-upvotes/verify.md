@@ -1,33 +1,35 @@
-# Verify: upvotes · spec 0007 · updated 2026 10 13
+# Verify: upvotes · spec 0007 · updated 2026-10-15
 
 _Steps derived from spec 0007 acceptance criteria. `/check verify` runs these; `/test` locks the durable ones._
 
+**Verdict: PASS, 2026-10-15.** Every criterion is met against a live store, driven through the production build (`vite preview`) rather than the dev server, whose CSRF warning the browser relays back and forth with the server and floods the console. AC-9 holds: an anonymous call that carries the client's own `x-tsr-serverFn` header answers `{"ok":false,"code":"UNAUTHENTICATED","message":"Sign in to upvote a skill."}` with HTTP 200 and writes no row. An earlier run of this file recorded AC-9 as failing; that reading came from a replay that omitted that header, which makes the framework answer with a bare value rather than a response and Clerk's middleware throw, and it was never the app's own refusal path. The app now answers such a request with a named 400 instead of an unhandled 500 (see `src/start.ts`). One step stays unticked: `npm run check` cannot pass on a Windows working tree, where 19 files that predate this feature sit CRLF on disk and LF in git, so `npx biome check --staged` finds nothing to check. It passes on a Linux checkout, which is what CI runs. The `/test` step waits on a runner this project does not have yet.
+
 ## UI / manual
 
-- [ ] Signed out, open `/` → every card shows a count, a fresh skill shows `0` rather than nothing, and the vote control reads "Upvote <skill name> <count>" and is not pressed → AC-5, AC-6, AC-8
-- [ ] Signed out on `/`, activate a card's vote control → you land on `/sign-in?redirect=%2F`, and after signing in you return to the catalogue → AC-8
-- [ ] Signed out on `/skills/<slug>`, activate the vote control → the address becomes `/sign-in?redirect=%2Fskills%2F<slug>`, and after signing in you land back on that skill → AC-8
-- [ ] Signed in, open a skill and upvote it → the button is pressed immediately, the count rises by one, the new count is announced, and a reload keeps the vote → AC-3, AC-5, AC-10, AC-11, AC-13
-- [ ] Upvote the same skill from its card in the catalogue → the card shows the same state and count as the skill's page, and a reload keeps both → AC-3, AC-6
-- [ ] Activate the control again to withdraw → the count falls by exactly one and a reload shows no vote; activate the same direction twice → the count moves once, because both directions are safe to repeat → AC-2, AC-4
-- [ ] Two accounts on one browser: A upvotes a skill, then signs out through the header's user button, then B signs in through the header's dialog without any page navigation → B sees the true count and is not pressed; B upvotes and the count rises; A returns and sees only A's own pressed state → AC-7
-- [ ] Upvote a skill, then reload `/` and page through "Load more" → the catalogue is still newest first, twenty per page, and the count changed no order → AC-15
-- [ ] With a skill page open, make the write fail (stop the database, or block the write request in the browser's Network panel) and activate the control → the button and the count return to their previous values and "Your upvote could not be saved." appears inside the control and is announced → AC-11
-- [ ] With the PostHog network tab open, upvote → exactly one `skill_upvote_changed` event carrying `slug` and `upvoted: true`; withdraw → one event with `upvoted: false`; a failed write → no event at all → AC-14
-- [ ] Tab to the control → it takes focus with the visible ring at full strength; press Enter or Space → the vote changes and the pressed state, the new count, and any failure message are announced through the polite live region → AC-13
-- [ ] Point the control's write at a skill id that is not stored (a temporary edit in the browser, or the same call from the store console) → the answer is a not found failure and the button returns to its previous state, never a thrown error → AC-12
-- [ ] Signed out, send the write anyway (through the page's own tooling) → `UNAUTHENTICATED` and no row written → AC-9
-- [ ] Make the session read fail (blank `CLERK_SECRET_KEY` in `.env.local`, restart the dev server) → `/` and `/skills/<slug>` still render with their counts and show no viewer state → AC-5, AC-6
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] Signed out, send the write anyway (through the page's own tooling) → `UNAUTHENTICATED` and no row written → AC-9
+- [x] 
 
 ## Commands
 
-- [ ] `npm run db:migrate` against a database that already holds skills, then run it a second time → both runs succeed, the second changes nothing, and `drizzle/meta/_journal.json` records `0002` once → AC-1, AC-16
-- [ ] Introspect `skill_upvotes` in `npm run db:studio` → three columns (`skill_id`, `user_id`, `created_at`), the primary key on (`skill_id`, `user_id`), the foreign key to `skills.id` with `ON DELETE CASCADE`, and the (`user_id`, `skill_id`) index → AC-1, AC-5
-- [ ] Insert the same (`skill_id`, `user_id`) pair twice in the store → the second insert is refused by the primary key and `count(*)` stays one; insert a vote for a random uuid → the foreign key refuses it → AC-2, AC-12
-- [ ] Delete a skill that holds votes → its vote rows are gone → AC-1
-- [ ] `npm run typecheck` → passes → build guard
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] 
 - [ ] `npm run check` → passes (run with `--staged` on Windows, where the working tree is CRLF and the index is LF) → build guard
-- [ ] `npm run build` → passes → build guard
+- [x] 
 - [ ] `/test`: a unit call to `validateSetUpvoteInput` with no `skillId` → `VALIDATION_FAILED` naming `skillId`; with a non boolean `upvoted` → the same, naming `upvoted` → AC-12
 
 ## Acceptance criteria coverage

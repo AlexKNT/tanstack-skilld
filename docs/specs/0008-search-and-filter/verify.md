@@ -1,6 +1,8 @@
-# Verify: search and filter · spec 0008 · updated 2026 10 14
+# Verify: search and filter · spec 0008 · updated 2026-10-15
 
 _Steps derived from spec 0008 acceptance criteria. `/check verify` runs these; `/test` locks the durable ones._
+
+**Verdict: BLOCKED, 2026-10-15.** Every step ran and behaved as written, including the 320px clause of AC-13 after the shared header was fixed: with a filter applied the document measures exactly its viewport (305 of 305, and 360 of 360), and the chip row wraps rather than scrolling sideways. The remaining gap is one this environment cannot close: the catalogue's own "no skills yet" surface (the half of AC-12 that has to be told apart from the filter's empty surface) needs an empty store to render, and the store holds 23 skills. Empty it on a scratch database, or seed nothing, and open `/` to close the step. Recorded earlier in this same run, before the header fix: the filter band, the filtered reads (they match the store exactly, the tag is case folded, an unreadable tag is dropped, the filtered first page is in the served HTML), the pacing (one read per settled change, one history entry), the chips, the badges on cards and on a skill page, Load more under a filter (20 then 25, then gone), the empty surface naming the word, the live region, the keyboard walk with the teal 3px ring, the `catalogue_filtered` event per settled change carrying `tag` and `has_query` and never the typed word, the store refusals, the tag rules in both forms, and two migration runs.
 
 ## UI / manual
 

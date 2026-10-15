@@ -9,14 +9,21 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
 	createRootRouteWithContext,
+	type ErrorComponentProps,
 	HeadContent,
+	Link,
 	Scripts,
 	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import type { CaptureResult } from "posthog-js";
 import { useEffect, useRef } from "react";
+import {
+	AppErrorFallback,
+	AppErrorSurface,
+} from "#/components/app-error-surface";
 import { SiteHeader } from "#/components/site-header";
+import { Button } from "#/components/ui/button";
 import { readViewerId } from "#/features/skills/data";
 import { useSkillViewerCacheSync } from "#/features/skills/use-viewer";
 import { readThemeChoice } from "#/features/theme/data";
@@ -72,7 +79,24 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		scripts: [{ children: THEME_INIT_SCRIPT }],
 	}),
 	shellComponent: RootDocument,
+	errorComponent: RootError,
 });
+
+/**
+ * The surface a failed root read or an uncaught route error renders in.
+ *
+ * The router's own reset re-runs the read that failed, so the retry here is a
+ * real retry rather than a re-render of the error.
+ */
+function RootError({ reset }: ErrorComponentProps) {
+	return (
+		<AppErrorSurface message="This page could not be loaded." onRetry={reset}>
+			<Button asChild size="sm" variant="ghost">
+				<Link to="/">Back to the catalogue</Link>
+			</Button>
+		</AppErrorSurface>
+	);
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const projectToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
@@ -107,7 +131,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				},
 			}}
 		>
-			<PostHogErrorBoundary>
+			<PostHogErrorBoundary fallback={AppErrorFallback}>
 				<RootContent>{children}</RootContent>
 			</PostHogErrorBoundary>
 		</PostHogProvider>
