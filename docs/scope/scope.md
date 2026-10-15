@@ -22,7 +22,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 4 | Signed in area | Slice 3 | in-progress |
 | 5 | Upvotes | Slice 4 | in-progress |
 | 6 | Search and filter | Slice 5 | in-progress |
-| 7 | Moderation | Slice 6 | in-progress |
+| 7 | Moderation | Slice 6 | done |
 | 8 | SEO metadata and sitemap | Hardening | planned |
 | 9 | Cookie notice and legal pages | Hardening | planned |
 | 10 | Deploy | Ship | planned |
@@ -158,7 +158,7 @@ An owner or an admin can hide a skill that breaks the rules, and a hidden skill 
   - [x] The admin role and the admin area: the Clerk metadata role, the guarded `/admin/skills` list, and its filter (AC-6, AC-16, AC-17, AC-18)
   - [x] The author's surfaces: the hidden badge with the reason, the two counts, the restore rules, the hidden state on the edit form (AC-11, AC-12, AC-14, AC-15)
   - [x] The polish pass: the shared dialog, the messages, the announcements, the cache settling, the event, and the accessibility walk (AC-20, AC-21, AC-22)
-- [ ] Verify it: `/check verify moderation`
+- [x] Verify it: `/check verify moderation`
 spec [0009](../specs/0009-moderation/index.md)
 
 ## Hardening

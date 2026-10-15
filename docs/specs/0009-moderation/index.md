@@ -1,7 +1,7 @@
 # 0009. Let an owner or an admin hide a skill, and keep hidden skills out of the public catalogue
 
 **Date**: 2026-10-13
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 
