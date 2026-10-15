@@ -7,11 +7,13 @@ guard, and one ownership rule. Spec: `docs/specs/0006-signed-in-area/index.md`.
 ## Where things live
 
 - `data.ts`: the one server function that reads our store for the area
-  (`getAccountOverview`, the identity from Clerk plus the published count).
+  (`getAccountOverview`, the identity from Clerk plus the published count and the
+  hidden count, kept apart).
 - `query.ts`: the area's query keys (`mySkillKeys`) and its query options, so
   every read and every invalidation agree.
 - `components/`: the sidebar navigation, the management card and its skeleton,
-  the edit form, the delete confirmation, and the profile forms.
+  the hidden state note the card and the edit form share, the edit form, the
+  delete confirmation, and the profile forms.
 
 The routes sit with the other file based routes in `src/routes/`. `account.tsx`
 is the layout and holds the guard; `account.index.tsx`, `account.skills.tsx`,
@@ -40,6 +42,10 @@ shares them.
   exactly what a missing skill answers, never a distinct "not yours" reason.
 - The paged list read filters by the session user id, so it cannot be made to
   return another author's rows.
+- Visibility is not ownership: the area's reads deliberately carry no filter on
+  it, so an author still sees a skill of their own that is hidden, with the
+  reason it went. An author may restore only a hide they made themselves; hiding
+  and restoring, and who may do which, live in `src/features/moderation/`.
 - Every skill write settles the reads it can make stale before it navigates: the
   detail key for the slug, the area's list and overview keys, and the catalogue
   cards.

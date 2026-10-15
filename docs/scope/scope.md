@@ -148,7 +148,7 @@ spec [0008](../specs/0008-search-and-filter/index.md) · code in `src/features/s
 
 ## Slice 6: Keep it tidy
 
-### 7. Moderation · in-progress
+### 7. Moderation · done
 An owner or an admin can hide a skill that breaks the rules, and a hidden skill leaves the public catalogue.
 **Done when:** an authorised user can hide and restore a skill, and a hidden skill never appears in the public list or on its detail page.
 - [x] Design it (spec): `/architect moderation`

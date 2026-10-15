@@ -57,7 +57,7 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title/index.md`.
 - Return explicit failures for expected errors, and handle them at one documented boundary.
 - Keep types strict: no `any`, no non null assertions, narrow instead of casting.
 - Named exports only, and give each exported function a short doc comment.
-- Naming: kebab case files, PascalCase components, `use` prefixes on hooks.
+- Naming: kebab case files, PascalCase components, `use` prefixes on hooks, and `.server.ts` for a module that must never reach the browser.
 - Validate required environment variables at startup.
 - UI meets WCAG AA: labelled controls, visible focus, keyboard reachable.
 - Folder by feature: a feature's routes, components, hooks, and server functions live together under `src/features/<feature>`. Shared pieces stay in `src/components`, `src/lib`, `src/hooks`, and `src/integrations`.
@@ -91,6 +91,7 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title/index.md`.
 <!-- Nested AGENTS.md files are listed here as they are created -->
 
 - [src/features/account/AGENTS.md](src/features/account/AGENTS.md): the guarded signed in area, its ownership rule, and the profile flows
+- [src/features/moderation/AGENTS.md](src/features/moderation/AGENTS.md): hiding a skill, the admin role and area, and the one place the visibility rule lives
 - [src/features/theme/AGENTS.md](src/features/theme/AGENTS.md): the cookie backed theme choice and the before paint contract
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._
