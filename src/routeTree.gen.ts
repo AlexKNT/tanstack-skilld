@@ -16,6 +16,7 @@ import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as AccountProfileRouteImport } from './routes/account.profile'
 import { Route as AccountSettingsRouteImport } from './routes/account.settings'
 import { Route as AccountSkillsRouteImport } from './routes/account.skills'
+import { Route as AdminSkillsRouteImport } from './routes/admin.skills'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SkillsSlugRouteImport } from './routes/skills.$slug'
@@ -58,6 +59,11 @@ const AccountSkillsRoute = AccountSkillsRouteImport.update({
   path: '/skills',
   getParentRoute: () => AccountRoute,
 } as any)
+const AdminSkillsRoute = AdminSkillsRouteImport.update({
+  id: '/admin/skills',
+  path: '/admin/skills',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/sign-in/$',
   path: '/sign-in/$',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/account/profile': typeof AccountProfileRoute
   '/account/settings': typeof AccountSettingsRoute
   '/account/skills': typeof AccountSkillsRouteWithChildren
+  '/admin/skills': typeof AdminSkillsRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/skills/$slug': typeof SkillsSlugRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/design': typeof DesignRoute
   '/account/profile': typeof AccountProfileRoute
   '/account/settings': typeof AccountSettingsRoute
+  '/admin/skills': typeof AdminSkillsRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/skills/$slug': typeof SkillsSlugRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/account/profile': typeof AccountProfileRoute
   '/account/settings': typeof AccountSettingsRoute
   '/account/skills': typeof AccountSkillsRouteWithChildren
+  '/admin/skills': typeof AdminSkillsRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/skills/$slug': typeof SkillsSlugRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/settings'
     | '/account/skills'
+    | '/admin/skills'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/skills/$slug'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/design'
     | '/account/profile'
     | '/account/settings'
+    | '/admin/skills'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/skills/$slug'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/settings'
     | '/account/skills'
+    | '/admin/skills'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/skills/$slug'
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRouteWithChildren
   DesignRoute: typeof DesignRoute
+  AdminSkillsRoute: typeof AdminSkillsRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignUpSplatRoute: typeof SignUpSplatRoute
   SkillsSlugRoute: typeof SkillsSlugRoute
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/skills'
       preLoaderRoute: typeof AccountSkillsRouteImport
       parentRoute: typeof AccountRoute
+    }
+    '/admin/skills': {
+      id: '/admin/skills'
+      path: '/admin/skills'
+      fullPath: '/admin/skills'
+      preLoaderRoute: typeof AdminSkillsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/sign-in/$': {
       id: '/sign-in/$'
@@ -320,6 +340,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRouteWithChildren,
   DesignRoute: DesignRoute,
+  AdminSkillsRoute: AdminSkillsRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignUpSplatRoute: SignUpSplatRoute,
   SkillsSlugRoute: SkillsSlugRoute,

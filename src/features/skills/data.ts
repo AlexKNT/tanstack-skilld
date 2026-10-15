@@ -1,4 +1,4 @@
-import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
+import { auth } from "@clerk/tanstack-react-start/server";
 import { createServerFn } from "@tanstack/react-start";
 
 import {
@@ -18,6 +18,7 @@ import {
 } from "#/db/queries";
 import { fail, ok, type Result } from "#/db/result";
 import type { SkillVisibility } from "#/db/schema";
+import { loadAuthors, type SkillAuthor } from "./authors.server";
 import {
 	type CreateSkillInput,
 	type SetUpvoteInput,
@@ -83,11 +84,7 @@ export const listSkills = createServerFn({ method: "GET" })
 	);
 
 /** A skill's publisher, read from Clerk and shown beside the skill. */
-export type SkillAuthor = {
-	id: string;
-	name: string;
-	imageUrl: string | undefined;
-};
+export type { SkillAuthor } from "./authors.server";
 
 /** One skill as the catalogue's cards read it. */
 export type SkillCard = {
@@ -266,51 +263,6 @@ function toCard(
 		upvoteCount: row.upvoteCount,
 		viewerHasUpvoted: row.viewerHasUpvoted,
 	};
-}
-
-/**
- * Reads the publishers for a page of skills in one batched Clerk call.
- *
- * Best effort by design: duplicate ids are asked for once, only the three
- * fields a card needs are read, and any failure (a slow Clerk, an unknown id)
- * is logged and answered with an empty map so the skills still render.
- */
-async function loadAuthors(
-	authorIds: ReadonlyArray<string | undefined>,
-): Promise<Map<string, SkillAuthor>> {
-	const uniqueIds = [
-		...new Set(authorIds.filter((id): id is string => id !== undefined)),
-	];
-
-	if (uniqueIds.length === 0) {
-		return new Map();
-	}
-
-	try {
-		const { data } = await clerkClient().users.getUserList({
-			limit: uniqueIds.length,
-			userId: uniqueIds,
-		});
-
-		const authors = new Map<string, SkillAuthor>();
-		for (const user of data) {
-			const fullName = [user.firstName, user.lastName]
-				.filter((part) => part !== null && part !== "")
-				.join(" ")
-				.trim();
-
-			authors.set(user.id, {
-				id: user.id,
-				name: fullName === "" ? (user.username ?? "Skild member") : fullName,
-				imageUrl: user.imageUrl === "" ? undefined : user.imageUrl,
-			});
-		}
-
-		return authors;
-	} catch (error) {
-		console.error("[skills] publisher lookup failed", error);
-		return new Map();
-	}
 }
 
 /**

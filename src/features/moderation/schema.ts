@@ -1,6 +1,9 @@
 import { fail, ok, type Result } from "#/db/result";
 import { SKILL_VISIBILITY_VALUES, type SkillVisibility } from "#/db/schema";
-import { validateSkillDetailInput } from "#/features/skills/schema";
+import {
+	validateListSkillsInput,
+	validateSkillDetailInput,
+} from "#/features/skills/schema";
 
 /** The most characters a hide's reason may hold, matching the store's rule. */
 export const MAX_MODERATION_REASON_LENGTH = 200;
@@ -99,4 +102,73 @@ export function validateSetSkillVisibilityInput(
 	}
 
 	return ok({ slug: slug.value.slug, visibility, reason: reason.value });
+}
+
+/** The failure codes the admin list read can return, decided in spec 0009. */
+export type ModerationReadFailureCode =
+	| "UNAUTHENTICATED"
+	| "NOT_ALLOWED"
+	| "VALIDATION_FAILED"
+	| "SKILLS_QUERY_FAILED";
+
+/** The payload accepted by the `listSkillsForModeration` server function. */
+export type ListSkillsForModerationInput = {
+	limit?: unknown;
+	offset?: unknown;
+	visibility?: unknown;
+};
+
+/** The admin list read once every part is known good. */
+export type ValidatedModerationListInput = {
+	limit: number;
+	offset: number;
+	visibility?: SkillVisibility;
+};
+
+/**
+ * The visibility an admin list was asked for, or nothing at all.
+ *
+ * A value that is not one of the two stored states is dropped rather than
+ * refused, because the value comes straight from the address: an unreadable one
+ * leaves the page showing every skill rather than failing it. Nothing that is
+ * not a stored state ever reaches the store.
+ */
+function asVisibilityFilter(
+	value: unknown,
+): Result<SkillVisibility | undefined, "VALIDATION_FAILED"> {
+	if (typeof value === "string" && isVisibility(value)) {
+		return ok(value);
+	}
+
+	return ok(undefined);
+}
+
+/**
+ * Applies the catalogue's page defaults to an admin list read, refuses a page
+ * the caller could not have meant, and drops a visibility the store does not
+ * hold.
+ */
+export function validateListSkillsForModerationInput(
+	input: ListSkillsForModerationInput,
+): Result<ValidatedModerationListInput, "VALIDATION_FAILED"> {
+	const page = validateListSkillsInput({
+		limit: input.limit,
+		offset: input.offset,
+	});
+
+	if (!page.ok) {
+		return page;
+	}
+
+	const visibility = asVisibilityFilter(input.visibility);
+
+	if (!visibility.ok) {
+		return visibility;
+	}
+
+	return ok({
+		limit: page.value.limit,
+		offset: page.value.offset,
+		visibility: visibility.value,
+	});
 }

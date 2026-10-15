@@ -27,7 +27,24 @@ export type VisibilityOutcome = {
 	visibility: "published" | "hidden";
 	/** Whether this call changed anything; a repeat reports that it did not. */
 	changed: boolean;
+	/** The sentence a polite live region reads out, worded in one place only. */
+	message: string;
 };
+
+/** The wording a caller is told after a change that wrote nothing. */
+function unchangedMessage(name: string, held: VisibilityAction): string {
+	return `${name} was already ${held === "hide" ? "hidden" : "published"}.`;
+}
+
+/** The wording a caller is told after a change that landed. */
+function changedMessage(
+	name: string,
+	visibility: "published" | "hidden",
+): string {
+	return visibility === "hidden"
+		? `${name} is hidden. It has left the catalogue.`
+		: `${name} is published again.`;
+}
 
 /**
  * The one confirmation both surfaces open to hide or restore a skill.
@@ -84,6 +101,9 @@ export function VisibilityDialog({
 					onDone({
 						visibility: result.value.visibility,
 						changed: result.value.changed,
+						message: result.value.changed
+							? changedMessage(name, result.value.visibility)
+							: unchangedMessage(name, action),
 					});
 				},
 			},

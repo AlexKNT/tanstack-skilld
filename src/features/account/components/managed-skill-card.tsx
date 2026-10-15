@@ -6,10 +6,7 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
-import {
-	VisibilityDialog,
-	type VisibilityOutcome,
-} from "#/features/moderation/components/visibility-dialog";
+import { VisibilityDialog } from "#/features/moderation/components/visibility-dialog";
 import type { ManagedSkillCard as ManagedSkillCardData } from "#/features/skills/data";
 import { formatSkillDate } from "#/features/skills/date";
 import { useSkillViewerId } from "#/features/skills/use-viewer";
@@ -29,21 +26,6 @@ export function ManagedSkillCard({ skill }: { skill: ManagedSkillCardData }) {
 	const [announcement, setAnnouncement] = useState("");
 	const hidden = skill.visibility === "hidden";
 	const hiddenByViewer = hidden && skill.moderatedBy === viewerId;
-
-	const announce = (outcome: VisibilityOutcome) => {
-		if (!outcome.changed) {
-			setAnnouncement(
-				`${skill.name} was already ${hidden ? "hidden" : "published"}.`,
-			);
-			return;
-		}
-
-		setAnnouncement(
-			outcome.visibility === "hidden"
-				? `${skill.name} is hidden. It has left the catalogue.`
-				: `${skill.name} is published again.`,
-		);
-	};
 
 	return (
 		<Card className="h-full">
@@ -98,7 +80,7 @@ export function ManagedSkillCard({ skill }: { skill: ManagedSkillCardData }) {
 						<VisibilityDialog
 							action={hidden ? "restore" : "hide"}
 							name={skill.name}
-							onDone={announce}
+							onDone={(outcome) => setAnnouncement(outcome.message)}
 							slug={skill.slug}
 						/>
 					)}

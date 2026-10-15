@@ -862,3 +862,93 @@ export async function updateSkillVisibilityRow(input: {
 		return fail("SKILLS_WRITE_FAILED", "The skill could not be updated.");
 	}
 }
+
+/** One row as the admin list reads it: the skill, its publisher, and its state. */
+export type ModerationSkillRow = {
+	id: string;
+	slug: string;
+	name: string;
+	summary: string;
+	authorId: string | undefined;
+	visibility: SkillVisibility;
+	/** Who performed the last hide or restore, and what it was made for. */
+	moderatedBy: string | undefined;
+	moderatedAt: Date | undefined;
+	reason: string | undefined;
+	createdAt: Date;
+};
+
+/** The boundary that turns the driver's nulls into the app's one empty value. */
+function toModerationSkillRow(row: {
+	id: string;
+	slug: string;
+	name: string;
+	summary: string;
+	authorId: string | null;
+	visibility: SkillVisibility;
+	moderatedBy: string | null;
+	moderatedAt: Date | null;
+	moderationReason: string | null;
+	createdAt: Date;
+}): ModerationSkillRow {
+	return {
+		id: row.id,
+		slug: row.slug,
+		name: row.name,
+		summary: row.summary,
+		authorId: row.authorId ?? undefined,
+		visibility: row.visibility,
+		moderatedBy: row.moderatedBy ?? undefined,
+		moderatedAt: row.moderatedAt ?? undefined,
+		reason: row.moderationReason ?? undefined,
+		createdAt: row.createdAt,
+	};
+}
+
+/**
+ * Reads one page of every skill whatever its visibility, newest first, with an
+ * optional narrowing to one of the two states.
+ *
+ * The page size, the offset paging, the order, and the "one extra row" rule are
+ * the catalogue's own, so the admin list reads like the list it moderates. The
+ * visibility prefix of `skills_visibility_created_idx` covers the unfiltered
+ * read and either filtered one, so this stays a covered, bounded read.
+ *
+ * Deliberately not filtered by visibility by default: an admin is the one
+ * person who must be able to see what has been hidden.
+ */
+export async function listSkillRowsForModeration(
+	limit: number,
+	offset: number,
+	visibility?: SkillVisibility,
+): Promise<Result<ModerationSkillRow[], "SKILLS_QUERY_FAILED">> {
+	try {
+		const rows = await getDatabase()
+			.select({
+				id: skills.id,
+				slug: skills.slug,
+				name: skills.name,
+				summary: skills.summary,
+				authorId: skills.authorId,
+				visibility: skills.visibility,
+				moderatedBy: skills.moderatedBy,
+				moderatedAt: skills.moderatedAt,
+				moderationReason: skills.moderationReason,
+				createdAt: skills.createdAt,
+			})
+			.from(skills)
+			.where(
+				visibility === undefined
+					? undefined
+					: eq(skills.visibility, visibility),
+			)
+			.orderBy(desc(skills.createdAt), desc(skills.id))
+			.limit(limit)
+			.offset(offset);
+
+		return ok(rows.map(toModerationSkillRow));
+	} catch (error) {
+		console.error("[skills] moderation list query failed", error);
+		return fail("SKILLS_QUERY_FAILED", "The skills could not be loaded.");
+	}
+}

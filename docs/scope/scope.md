@@ -155,7 +155,7 @@ An owner or an admin can hide a skill that breaks the rules, and a hidden skill 
 - [ ] Build it: `/develop moderation`
   - [x] The state and the store: the migration, the visibility write with its authority inside the filter, and the public reads closed (AC-1, AC-2, AC-5, AC-7, AC-8, AC-9, AC-10)
   - [x] The thin thread: the write, the author check, and one hide control on the owner's own card, on real data (AC-3, AC-4, AC-13, AC-19)
-  - [ ] The admin role and the admin area: the Clerk metadata role, the guarded `/admin/skills` list, and its filter (AC-6, AC-16, AC-17, AC-18)
+  - [x] The admin role and the admin area: the Clerk metadata role, the guarded `/admin/skills` list, and its filter (AC-6, AC-16, AC-17, AC-18)
   - [ ] The author's surfaces: the hidden badge with the reason, the two counts, the restore rules, the hidden state on the edit form (AC-11, AC-12, AC-14, AC-15)
   - [ ] The polish pass: the shared dialog, the messages, the announcements, the cache settling, the event, and the accessibility walk (AC-20, AC-21, AC-22)
 - [ ] Verify it: `/check verify moderation`
