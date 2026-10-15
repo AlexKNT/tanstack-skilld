@@ -23,6 +23,15 @@ const tsvector = customType<{ data: string }>({
 });
 
 /**
+ * The two states a skill's visibility can hold, declared once so the column,
+ * the check constraint, and the feature layer cannot drift apart.
+ */
+export const SKILL_VISIBILITY_VALUES = ["published", "hidden"] as const;
+
+/** One skill's visibility: `published` reaches the catalogue, `hidden` does not. */
+export type SkillVisibility = (typeof SKILL_VISIBILITY_VALUES)[number];
+
+/**
  * The published skills.
  *
  * The publisher is held as a Clerk user id and nothing else, so Clerk stays the
@@ -38,6 +47,11 @@ const tsvector = customType<{ data: string }>({
  * `skills_tags_valid` is a small immutable function created by the migration
  * (a check constraint cannot walk a list on its own), so the generated SQL is
  * hand edited once to create it before the constraint that calls it.
+ *
+ * `visibility` sits on the row the catalogue already reads, so hiding a skill
+ * costs the public reads a predicate rather than a second table. The three
+ * moderation columns describe the last real hide or restore, and nothing here
+ * writes them except the moderation write itself.
  */
 export const skills = pgTable(
 	"skills",
@@ -50,6 +64,12 @@ export const skills = pgTable(
 		installUrl: text("install_url"),
 		authorId: text("author_id"),
 		tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+		visibility: text("visibility", { enum: SKILL_VISIBILITY_VALUES })
+			.notNull()
+			.default("published"),
+		moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+		moderatedBy: text("moderated_by"),
+		moderationReason: text("moderation_reason"),
 		searchDocument: tsvector("search_document").generatedAlwaysAs(
 			sql`to_tsvector('english', "name" || ' ' || "summary" || ' ' || "description")`,
 		),
@@ -70,6 +90,19 @@ export const skills = pgTable(
 		),
 		index("skills_tags_idx").using("gin", table.tags),
 		index("skills_search_idx").using("gin", table.searchDocument),
+		index("skills_visibility_created_idx").on(
+			table.visibility,
+			table.createdAt.desc(),
+			table.id.desc(),
+		),
+		check(
+			"skills_visibility_allowed",
+			sql`${table.visibility} in ('published', 'hidden')`,
+		),
+		check(
+			"skills_moderation_reason_length",
+			sql`${table.moderationReason} is null or char_length(btrim(${table.moderationReason})) between 1 and 200`,
+		),
 		check(
 			"skills_tags_check",
 			sql`cardinality(${table.tags}) <= 5 and skills_tags_valid(${table.tags})`,

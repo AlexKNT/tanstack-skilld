@@ -4,13 +4,15 @@ import {
 	desc,
 	eq,
 	getTableColumns,
+	ne,
+	or,
 	type SQL,
 	sql,
 } from "drizzle-orm";
 
 import { getDatabase } from "./client.server";
 import { fail, ok, type Result } from "./result";
-import type { Skill } from "./schema";
+import type { Skill, SkillVisibility } from "./schema";
 import { skills, skillUpvotes } from "./schema";
 
 /**
@@ -202,6 +204,17 @@ function upvoteRead(viewerId: string | undefined) {
 }
 
 /**
+ * The one predicate that closes every public read.
+ *
+ * A hidden skill leaves the catalogue, its own page, and the tag counts at
+ * once, because the rule sits in the shared read rather than in a caller that
+ * might forget it (spec 0009's AC-9).
+ */
+function publishedOnly(): SQL {
+	return eq(skills.visibility, "published");
+}
+
+/**
  * The conditions a filter adds to a page read, one per present part.
  *
  * A term is matched against the store's own search document through the query
@@ -247,7 +260,7 @@ export async function listSkillRows(
 ): Promise<Result<SkillListRow[], "SKILLS_QUERY_FAILED">> {
 	try {
 		const votes = upvoteRead(viewerId);
-		const conditions = filterConditions(filter);
+		const conditions = [publishedOnly(), ...filterConditions(filter)];
 
 		const rows = await getDatabase()
 			.select({
@@ -263,7 +276,7 @@ export async function listSkillRows(
 			})
 			.from(skills)
 			.leftJoin(votes.counts, eq(votes.counts.skillId, skills.id))
-			.where(conditions.length === 0 ? undefined : and(...conditions))
+			.where(and(...conditions))
 			.orderBy(desc(skills.createdAt), desc(skills.id))
 			.limit(limit)
 			.offset(offset);
@@ -294,6 +307,7 @@ export async function listSkillTagRows(): Promise<
 				count: sql<number>`count(*)::int`.as("count"),
 			})
 			.from(sql`${skills}, unnest(${skills.tags}) as tag`)
+			.where(publishedOnly())
 			.groupBy(sql`tag`)
 			.orderBy(sql`count(*) desc, tag asc`);
 
@@ -352,10 +366,14 @@ export async function insertSkillWithSlug(
 }
 
 /**
- * Looks a skill up by its slug, with its vote count and whether the given
- * viewer has voted for it.
+ * Looks a published skill up by its slug, with its vote count and whether the
+ * given viewer has voted for it.
  *
- * Used by the detail page and by the seed, which only reads the stored columns.
+ * Used by the detail page, which must not see a hidden skill: a hidden row is
+ * refused by the predicate below and comes back as nothing at all, so the page
+ * answers exactly as it does for a slug nobody stored (spec 0009's AC-10). The
+ * author's own reads go through `findSkillRowForAuthor`, which is deliberately
+ * not filtered.
  */
 export async function findSkillBySlug(
 	slug: string,
@@ -368,7 +386,7 @@ export async function findSkillBySlug(
 			.select({ ...getTableColumns(skills), ...votes.columns })
 			.from(skills)
 			.leftJoin(votes.counts, eq(votes.counts.skillId, skills.id))
-			.where(eq(skills.slug, slug))
+			.where(and(eq(skills.slug, slug), publishedOnly()))
 			.limit(1);
 
 		return ok(row);
@@ -648,5 +666,160 @@ export async function deleteSkillRow(
 	} catch (error) {
 		console.error("[skills] delete failed", error);
 		return fail("SKILLS_WRITE_FAILED", "The skill could not be deleted.");
+	}
+}
+
+/** What a moderation write leaves behind, and whether it wrote anything. */
+export type SkillVisibilityChange = {
+	slug: string;
+	/** The visibility the skill holds now. */
+	visibility: SkillVisibility;
+	/** Whether this call wrote a row: asking for the state already held writes nothing. */
+	changed: boolean;
+	moderatedAt: Date | undefined;
+	moderatedBy: string | undefined;
+	reason: string | undefined;
+	/**
+	 * Whether the actor owns the skill, which is what the analytics event
+	 * reports. A person who is both the author and an admin counts as the author.
+	 */
+	actorWasAuthor: boolean;
+};
+
+/** The columns a moderation write writes and reads back. */
+const VISIBILITY_COLUMNS = {
+	slug: skills.slug,
+	authorId: skills.authorId,
+	visibility: skills.visibility,
+	moderatedAt: skills.moderatedAt,
+	moderatedBy: skills.moderatedBy,
+	moderationReason: skills.moderationReason,
+};
+
+/** One row as the moderation columns read it, before nulls become `undefined`. */
+type VisibilityRow = {
+	slug: string;
+	authorId: string | null;
+	visibility: SkillVisibility;
+	moderatedAt: Date | null;
+	moderatedBy: string | null;
+	moderationReason: string | null;
+};
+
+/** The boundary that turns the driver's nulls into the app's one empty value. */
+function toVisibilityChange(
+	row: VisibilityRow,
+	changed: boolean,
+	actorId: string,
+): SkillVisibilityChange {
+	return {
+		slug: row.slug,
+		visibility: row.visibility,
+		changed,
+		moderatedAt: row.moderatedAt ?? undefined,
+		moderatedBy: row.moderatedBy ?? undefined,
+		reason: row.moderationReason ?? undefined,
+		actorWasAuthor: row.authorId === actorId,
+	};
+}
+
+/**
+ * Hides or restores one skill, with the authority rule inside the statement.
+ *
+ * Two statements sit behind the one write, because the account area's rule must
+ * never be able to reach another person's row: an author's statement asks for
+ * the author's own row and only the two transitions they may make (hide what is
+ * published, restore what they hid themselves, decided from `moderated_by`), and
+ * an admin's statement asks for the slug alone and requires the state to
+ * differ. Which one runs is chosen by the role the server read, never by
+ * anything the browser sent.
+ *
+ * The state to reach is an input rather than a direction, so asking for the
+ * state a skill already holds matches nothing and writes no column: a repeated
+ * or retried call cannot change who acted, when, or why. When nothing was
+ * written the row is read back and the answer decided there: a row that is not
+ * the caller's, and not theirs to moderate, answers not found exactly as a slug
+ * nobody stored does, a row already holding the asked for state answers that
+ * state with `changed` false, and an author whose restore the statement refused
+ * is told an admin has to do it.
+ */
+export async function updateSkillVisibilityRow(input: {
+	slug: string;
+	actorId: string;
+	visibility: SkillVisibility;
+	/** The reason for a hide, already trimmed, or nothing when none was given. */
+	reason?: string;
+	isAdmin: boolean;
+}): Promise<
+	Result<
+		SkillVisibilityChange,
+		"SKILL_NOT_FOUND" | "NOT_ALLOWED" | "SKILLS_WRITE_FAILED"
+	>
+> {
+	const { slug, actorId, visibility, reason, isAdmin } = input;
+
+	const values = {
+		visibility,
+		// The store's own clock, not the server process's, so the recorded time
+		// is the one the row was written at.
+		moderatedAt: sql`now()`,
+		moderatedBy: actorId,
+		// A reason describes the hide it was written for, so a restore clears it.
+		moderationReason: visibility === "hidden" ? (reason ?? null) : null,
+	};
+
+	try {
+		const written = isAdmin
+			? await getDatabase()
+					.update(skills)
+					.set(values)
+					.where(and(eq(skills.slug, slug), ne(skills.visibility, visibility)))
+					.returning(VISIBILITY_COLUMNS)
+			: await getDatabase()
+					.update(skills)
+					.set(values)
+					.where(
+						and(
+							eq(skills.slug, slug),
+							eq(skills.authorId, actorId),
+							or(
+								and(
+									eq(skills.visibility, "published"),
+									sql`${visibility} = 'hidden'`,
+								),
+								and(
+									eq(skills.visibility, "hidden"),
+									eq(skills.moderatedBy, actorId),
+									sql`${visibility} = 'published'`,
+								),
+							),
+						),
+					)
+					.returning(VISIBILITY_COLUMNS);
+
+		const [row] = written;
+
+		if (row !== undefined) {
+			return ok(toVisibilityChange(row, true, actorId));
+		}
+
+		const [current] = await getDatabase()
+			.select(VISIBILITY_COLUMNS)
+			.from(skills)
+			.where(eq(skills.slug, slug))
+			.limit(1);
+
+		if (current === undefined || (!isAdmin && current.authorId !== actorId)) {
+			return fail("SKILL_NOT_FOUND", SKILL_MISSING);
+		}
+
+		if (current.visibility === visibility) {
+			return ok(toVisibilityChange(current, false, actorId));
+		}
+
+		return fail("NOT_ALLOWED", "Only an admin can restore this skill.");
+	} catch (error) {
+		console.error("[skills] visibility write failed", error);
+		return fail("SKILLS_WRITE_FAILED", "The skill could not be updated.");
 	}
 }

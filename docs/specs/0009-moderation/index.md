@@ -1,7 +1,7 @@
 # 0009. Let an owner or an admin hide a skill, and keep hidden skills out of the public catalogue
 
 **Date**: 2026-10-13
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -141,8 +141,8 @@ Two store statements sit behind the one write rather than one statement with a w
 
 Ordered for this project's build approach, Tracer Bullet (prove the thinnest thread end to end before thickening it), so the migration, the write, the author check, and one working control land before the admin role, the second surface, and the polish.
 
-1. The store: add the migration for the four columns and the index, and the visibility write in `src/db/queries.ts` as two statements (one for a row the session user authored, one for any row by slug, chosen by the role), each with the authority rule in its own filter and the answer read from the rows it reports as changed. The write leaves the previous action's actor, time, and reason alone when the state does not change, and clears the reason when it restores. All of it returns the project's `Result` shape, and it is applied to a hosted Postgres with `npm run db:migrate`, satisfies **AC-1**, **AC-2**, **AC-5**, **AC-8**, **AC-9**
-2. Close the public reads: filter the shared list query to published, and let a hidden skill answer the detail read exactly as a slug that is not stored does, satisfies **AC-7**, **AC-9**, **AC-10**
+1. [x] The store: add the migration for the four columns and the index, and the visibility write in `src/db/queries.ts` as two statements (one for a row the session user authored, one for any row by slug, chosen by the role), each with the authority rule in its own filter and the answer read from the rows it reports as changed. The write leaves the previous action's actor, time, and reason alone when the state does not change, and clears the reason when it restores. All of it returns the project's `Result` shape, and it is applied to a hosted Postgres with `npm run db:migrate`, satisfies **AC-1**, **AC-2**, **AC-5**, **AC-8**, **AC-9**
+2. [x] Close the public reads: filter the shared list query to published, and let a hidden skill answer the detail read exactly as a slug that is not stored does, satisfies **AC-7**, **AC-9**, **AC-10**
 3. Thin thread end to end: add `setSkillVisibility` to `src/features/skills/data.ts` with the author check read from the session, one hide control on a card inside the account area, and the settling of the catalogue and detail keys so the thread is proved against fresh reads rather than a stale page, satisfies **AC-3**, **AC-4**, **AC-5**, **AC-13**, **AC-19**
 4. The admin role: a server helper that reads the role from the person's Clerk public metadata, settled once per request, and the admin branch of the write, so an admin can hide and restore any skill, satisfies **AC-6**, **AC-18**
 5. The admin area: the `/admin/skills` route with its guarded `beforeLoad`, the visibility filter in its search validator, the paged admin read, and the row with its state and control, satisfies **AC-16**, **AC-17**
