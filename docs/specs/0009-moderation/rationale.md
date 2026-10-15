@@ -145,9 +145,9 @@ Checked while writing this spec:
 
 - `src/db/schema.ts` holds one table, `skills`, with `author_id` as a nullable text Clerk id, a unique index on `slug`, two ordering indexes, and check constraints for the slug, the lengths, and the timestamp order. There is no state column, no archive, and no second table beyond the upvote work in flight.
 - `src/db/queries.ts` holds every read and write: `listSkillRows` (the shared catalogue list query, paged newest first), `findSkillBySlug` (the detail read), `findSkillRowForAuthor`, `updateSkillRow`, and `deleteSkillRow` (all filtering on `author_id` inside the where clause), plus the author list and count the account area uses.
-- `src/features/skills/data.ts` holds the public server functions (`listSkills`, `listSkillCards`, `getSkillDetail`), the write (`createSkill`), the session guard helper in `auth.ts`, and the batched Clerk publisher read (`loadAuthors`).
+- `src/features/skills/data.ts` holds the public server functions (`listSkills`, `listSkillCards`, `getSkillDetail`), the write (`createSkill`), and the session guard helper in `auth.ts`. The batched Clerk read of publishers and moderators lives in `src/features/skills/authors.server.ts`.
 - `src/features/account/data.ts` reads the Clerk user directly (`clerkClient().users.getUser`) for the overview, which is the precedent for reading a role from the same record.
 - A search across `src` for admin, moderator, role, or permission concepts finds none: the only matches are `aria-hidden`, `overflow-hidden`, and the design gallery's reserved `hidden` badge in `src/routes/design.tsx`.
 - `src/components/ui/` holds button, card, badge (with a destructive variant), alert, alert-dialog, avatar, separator, skeleton, empty, and spinner, so the hide confirmation dialog needs no new primitive.
-- `drizzle/` holds two migrations applied by `npm run db:migrate`, so the column group lands as `0002`.
+- `drizzle/` holds the migrations applied by `npm run db:migrate`. The column group landed as `0004_mature_tyrannus`, after the upvote and search migrations.
 - Analytics events are captured in route components (`sign_in_started`, `sign_up_started`, `theme_changed`), so the event this feature captures follows the same shape and place.

@@ -20,7 +20,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 2 | Skill catalogue | Slice 1 | done |
 | 3 | Publish a skill | Slice 2 | done |
 | 4 | Signed in area | Slice 3 | in-progress |
-| 5 | Upvotes | Slice 4 | in-progress |
+| 5 | Upvotes | Slice 4 | done |
 | 6 | Search and filter | Slice 5 | in-progress |
 | 7 | Moderation | Slice 6 | done |
 | 8 | SEO metadata and sitemap | Hardening | planned |
@@ -119,7 +119,7 @@ spec [0006](../specs/0006-signed-in-area/index.md) · code in `src/routes/accoun
 
 ## Slice 4: Community signal
 
-### 5. Upvotes · in-progress
+### 5. Upvotes · done
 Signed in users upvote a skill once, and the count shows on cards and on the detail page.
 **Done when:** an upvote persists, the count updates, a second upvote does not count twice, and signed out visitors see the count but cannot vote.
 - [x] Design it (spec): `/architect upvotes`

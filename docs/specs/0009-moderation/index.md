@@ -103,7 +103,7 @@ Two store statements sit behind the one write rather than one statement with a w
 | | whether the event is captured at all | the `changed` flag the write returns; a no-op captures nothing |
 | the catalogue read | which skills appear | the `skills.visibility` column |
 | the detail read | a hidden skill answering not found | the `skills.visibility` column |
-| the account list | the hidden badge, the reason, who hid it, when | `skills.visibility`, `skills.moderation_reason`, `skills.moderated_by` resolved to a display name through the existing batched Clerk author read in `src/features/skills/data.ts`, and `skills.moderated_at` |
+| the account list | the hidden badge, the reason, who hid it, when | `skills.visibility`, `skills.moderation_reason`, `skills.moderated_by` resolved to a display name through the existing batched Clerk author read in `src/features/skills/authors.server.ts`, and `skills.moderated_at` |
 | the account list and the admin list | the name of an actor Clerk does not resolve | one neutral label defined in the moderation area, so a missing id never fails a row |
 | the account overview | the published count and the hidden count | a `count(*)` over the author's rows, grouped by `skills.visibility` |
 | the admin list | each row's skill, publisher, and state | the store read plus the same batched Clerk author read, over the union of the publisher ids and the moderator ids on the page; the state from `skills.visibility`, the last action from the three moderation columns |
@@ -143,7 +143,7 @@ Ordered for this project's build approach, Tracer Bullet (prove the thinnest thr
 
 1. [x] The store: add the migration for the four columns and the index, and the visibility write in `src/db/queries.ts` as two statements (one for a row the session user authored, one for any row by slug, chosen by the role), each with the authority rule in its own filter and the answer read from the rows it reports as changed. The write leaves the previous action's actor, time, and reason alone when the state does not change, and clears the reason when it restores. All of it returns the project's `Result` shape, and it is applied to a hosted Postgres with `npm run db:migrate`, satisfies **AC-1**, **AC-2**, **AC-5**, **AC-8**, **AC-9**
 2. [x] Close the public reads: filter the shared list query to published, and let a hidden skill answer the detail read exactly as a slug that is not stored does, satisfies **AC-7**, **AC-9**, **AC-10**
-3. [x] Thin thread end to end: add `setSkillVisibility` to `src/features/skills/data.ts` with the author check read from the session, one hide control on a card inside the account area, and the settling of the catalogue and detail keys so the thread is proved against fresh reads rather than a stale page, satisfies **AC-3**, **AC-4**, **AC-5**, **AC-13**, **AC-19**
+3. [x] Thin thread end to end: add `setSkillVisibility` to `src/features/moderation/data.ts` (the new moderation area) with the author check read from the session, one hide control on a card inside the account area, and the settling of the catalogue and detail keys so the thread is proved against fresh reads rather than a stale page, satisfies **AC-3**, **AC-4**, **AC-5**, **AC-13**, **AC-19**
 4. [x] The admin role: a server helper that reads the role from the person's Clerk public metadata, settled once per request, and the admin branch of the write, so an admin can hide and restore any skill, satisfies **AC-6**, **AC-18**
 5. [x] The admin area: the `/admin/skills` route with its guarded `beforeLoad`, the visibility filter in its search validator, the paged admin read, and the row with its state and control, satisfies **AC-16**, **AC-17**
 6. [x] The author's surfaces: the hidden badge with the reason, the actor, and the time on the managed card, the neutral label for an unresolvable actor, the published and hidden counts on the overview, the restore control rules, and the hidden state on the edit form, satisfies **AC-11**, **AC-12**, **AC-14**, **AC-15**
@@ -184,8 +184,8 @@ Ordered for this project's build approach, Tracer Bullet (prove the thinnest thr
 - [ ] The catalogue search and filter (spec 0008) needs the same rule in the two places that do not go through the shared list query: the tag counts, and the stored search document if it is materialised. Confirm both when that feature is built.
 - [ ] If hide and restore history is ever wanted (a pattern of abuse, a dispute), that is a moderation events table added beside the current state, not a change to these columns.
 - [ ] A user facing way to report a skill is deliberately out of scope, and it is the honest gap in this feature: an admin can only act on what they happen to notice. Worth its own decision if the catalogue grows.
-- [ ] `src/features/moderation/AGENTS.md` should carry the visibility rule, the role's home in Clerk, and the restore authority rule once the area exists, with a pointer line added to the root `AGENTS.md` context list.
-- [ ] The account area's `AGENTS.md` ownership section should gain one line: an author may restore only a hide they made themselves.
+- [x] `src/features/moderation/AGENTS.md` should carry the visibility rule, the role's home in Clerk, and the restore authority rule once the area exists, with a pointer line added to the root `AGENTS.md` context list.
+- [x] The account area's `AGENTS.md` ownership section should gain one line: an author may restore only a hide they made themselves.
 - [ ] The Agent Skills and MCP discovery offer was skipped because this feature chooses no new tool: it reuses the store, the server functions, the Clerk session and role, and TanStack Query exactly as the earlier specs left them.
 
 ## Rationale
