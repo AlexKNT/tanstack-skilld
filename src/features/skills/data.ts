@@ -17,6 +17,7 @@ import {
 	updateSkillRow,
 } from "#/db/queries";
 import { fail, ok, type Result } from "#/db/result";
+import type { SkillVisibility } from "#/db/schema";
 import {
 	type CreateSkillInput,
 	type SetUpvoteInput,
@@ -521,6 +522,12 @@ export type ManagedSkillCard = {
 	name: string;
 	summary: string;
 	updatedAt: Date;
+	visibility: SkillVisibility;
+	/** Who performed the last hide or restore, or nothing when none was performed. */
+	moderatedBy: string | undefined;
+	moderatedAt: Date | undefined;
+	/** The reason the current hide was made for, cleared by a restore. */
+	reason: string | undefined;
 };
 
 /** One page of management cards, and whether a further page follows. */

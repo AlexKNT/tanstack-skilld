@@ -524,7 +524,38 @@ export type ManagedSkillRow = {
 	name: string;
 	summary: string;
 	updatedAt: Date;
+	visibility: SkillVisibility;
+	/** Who performed the last hide or restore, or nothing when none was performed. */
+	moderatedBy: string | undefined;
+	moderatedAt: Date | undefined;
+	/** The reason the current hide was made for, cleared by a restore. */
+	reason: string | undefined;
 };
+
+/** The boundary that turns the driver's nulls into the app's one empty value. */
+function toManagedSkillRow(row: {
+	id: string;
+	slug: string;
+	name: string;
+	summary: string;
+	updatedAt: Date;
+	visibility: SkillVisibility;
+	moderatedBy: string | null;
+	moderatedAt: Date | null;
+	moderationReason: string | null;
+}): ManagedSkillRow {
+	return {
+		id: row.id,
+		slug: row.slug,
+		name: row.name,
+		summary: row.summary,
+		updatedAt: row.updatedAt,
+		visibility: row.visibility,
+		moderatedBy: row.moderatedBy ?? undefined,
+		moderatedAt: row.moderatedAt ?? undefined,
+		reason: row.moderationReason ?? undefined,
+	};
+}
 
 /**
  * Reads one page of an author's own skills, most recently updated first.
@@ -532,6 +563,10 @@ export type ManagedSkillRow = {
  * The author id comes from the session, never from the caller, so the filter
  * cannot be widened to another person's rows. The order matches the
  * `skills_author_updated_idx` index, which is what keeps it cheap.
+ *
+ * Deliberately not filtered by visibility: an author sees their own hidden
+ * skills here, with the state and the last action on them, which is where they
+ * learn why one went (spec 0009's AC-11).
  */
 export async function listSkillRowsByAuthor(
 	authorId: string,
@@ -546,6 +581,10 @@ export async function listSkillRowsByAuthor(
 				name: skills.name,
 				summary: skills.summary,
 				updatedAt: skills.updatedAt,
+				visibility: skills.visibility,
+				moderatedBy: skills.moderatedBy,
+				moderatedAt: skills.moderatedAt,
+				moderationReason: skills.moderationReason,
 			})
 			.from(skills)
 			.where(eq(skills.authorId, authorId))
@@ -553,7 +592,7 @@ export async function listSkillRowsByAuthor(
 			.limit(limit)
 			.offset(offset);
 
-		return ok(rows);
+		return ok(rows.map(toManagedSkillRow));
 	} catch (error) {
 		console.error("[skills] listSkillRowsByAuthor query failed", error);
 		return fail("SKILLS_QUERY_FAILED", "Your skills could not be loaded.");
