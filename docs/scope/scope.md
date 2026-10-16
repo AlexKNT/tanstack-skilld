@@ -23,7 +23,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 5 | Upvotes | Slice 4 | done |
 | 6 | Search and filter | Slice 5 | in-progress |
 | 7 | Moderation | Slice 6 | done |
-| 8 | SEO metadata and sitemap | Hardening | planned |
+| 8 | SEO metadata and sitemap | Hardening | in-progress |
 | 9 | Cookie notice and legal pages | Hardening | planned |
 | 10 | Deploy | Ship | planned |
 
@@ -163,10 +163,17 @@ spec [0009](../specs/0009-moderation/index.md)
 
 ## Hardening
 
-### 8. SEO metadata and sitemap · needs a decision
+### 8. SEO metadata and sitemap · in-progress
 Per page titles and descriptions, plus a sitemap covering the public pages.
 **Done when:** every public page has a unique title and description, and a sitemap lists the public URLs.
-- [ ] Design it (spec): `/architect SEO metadata and sitemap`
+- [x] Design it (spec): `/architect SEO metadata and sitemap`
+- [ ] Build it: `/develop SEO metadata and sitemap`
+  - [ ] The thin thread: both crawl routes answering, the site address read and validated, and the home page's title and description in the server rendered HTML (AC-1, AC-6, AC-10, AC-14)
+  - [ ] Metadata on the pages that need it: the skill page's own title and description, the social tags, the filtered view's rule, and the one middleware noindex rule for the private paths (AC-2, AC-3, AC-4, AC-5, AC-12)
+  - [ ] The crawl files thickened: the published entries through the shared visibility rule, the date only lastmod, the cache headers, the 503 path when the read fails, and the host rule (AC-7, AC-8, AC-9, AC-11)
+  - [ ] The structured data on skill pages, then the crawl and quality pass on both a production host and a local one (AC-13, all)
+- [ ] Verify it: `/check verify SEO metadata and sitemap`
+spec [0010](../specs/0010-seo-metadata-and-sitemap.md)
 
 ### 9. Cookie notice and legal pages · needs a decision
 A consent notice for the analytics cookies, and simple privacy and terms pages.
@@ -188,6 +195,8 @@ Out of scope for this build pass, kept so the plan stays honest.
 - **Upvoted skills list**: a page in the account area listing the skills you upvoted · from spec 0007 · needs a decision
 - **Tag landing page**: one page per tag, listing the skills that carry it · from spec 0008 · needs a decision
 - **Report a skill**: a visitor flags a skill for an admin to review · from spec 0009 · needs a decision
+- **Share image**: one static image for the whole site, then the `og:image` tag and the large social card · from spec 0010 · needs a decision
+- **Publisher written search description**: let a publisher write the description a search engine shows, for when the stored summary is too long for a snippet · from spec 0010 · needs a decision
 
 ## Legend
 
