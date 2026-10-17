@@ -24,7 +24,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 6 | Search and filter | Slice 5 | in-progress |
 | 7 | Moderation | Slice 6 | done |
 | 8 | SEO metadata and sitemap | Hardening | in-progress |
-| 9 | Cookie notice and legal pages | Hardening | planned |
+| 9 | Cookie notice and legal pages | Hardening | in-progress |
 | 10 | Deploy | Ship | planned |
 
 ## Foundations
@@ -175,10 +175,18 @@ Per page titles and descriptions, plus a sitemap covering the public pages.
 - [ ] Verify it: `/check verify SEO metadata and sitemap`
 spec [0010](../specs/0010-seo-metadata-and-sitemap/index.md) · code in `src/features/seo/`, `src/routes/sitemap[.]xml.ts`, `src/routes/robots[.]txt.ts`, `src/start.ts`, `src/routes/index.tsx`, `src/routes/skills.$slug.tsx`, `src/db/queries.ts`
 
-### 9. Cookie notice and legal pages · needs a decision
+### 9. Cookie notice and legal pages · in-progress
 A consent notice for the analytics cookies, and simple privacy and terms pages.
 **Done when:** a first time visitor can accept or decline analytics cookies, the choice persists across visits, and privacy and terms pages are reachable from the footer.
-- [ ] Design it (spec): `/architect cookie notice and legal pages`
+- [x] Design it (spec): `/architect cookie notice and legal pages`
+- [x] Build it: `/develop cookie notice and legal pages`
+  - [x] The gate end to end: the consent record, the server read, the banner, and analytics silent until accepted (AC-1, AC-2, AC-3)
+  - [x] Every other answer and the way back: decline, expiry, forged values, and the footer control (AC-4, AC-5, AC-6, AC-7)
+  - [x] The privacy and terms pages with drafted copy and marked placeholders (AC-8)
+  - [x] Metadata, canonicals and the two sitemap entries (AC-9, AC-10)
+  - [x] The proof pass: network trace, keyboard, 320px, both themes (AC-1, AC-2, AC-8)
+- [ ] Verify it: `/check verify cookie notice and legal pages`
+spec [0011](../specs/0011-cookie-notice-and-legal-pages/index.md) · code in `src/features/privacy/`, `src/routes/privacy.tsx`, `src/routes/terms.tsx`, `src/routes/__root.tsx`, `src/routes/sitemap[.]xml.ts`, `src/features/seo/meta.ts`
 
 ## Ship
 
@@ -196,6 +204,7 @@ Out of scope for this build pass, kept so the plan stays honest.
 - **Tag landing page**: one page per tag, listing the skills that carry it · from spec 0008 · needs a decision
 - **Report a skill**: a visitor flags a skill for an admin to review · from spec 0009 · needs a decision
 - **Share image**: one static image for the whole site, then the `og:image` tag and the large social card · from spec 0010 · needs a decision
+- **Account level cookie control**: one place in the account area to see and change the analytics choice, so a signed in person stops being asked on each device · from spec 0011 · needs a decision
 - **Publisher written search description**: let a publisher write the description a search engine shows, for when the stored summary is too long for a snippet · from spec 0010 · needs a decision
 
 ## Legend

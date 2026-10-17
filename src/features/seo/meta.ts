@@ -74,6 +74,24 @@ export function skillTitle(name: string): string {
 }
 
 /**
+ * A legal page's head: its own title and description, plus its absolute
+ * canonical. Both pages are public, so neither carries a robots tag.
+ */
+export function legalPageHead(input: {
+	title: string;
+	description: string;
+	url: string;
+}): PageHead {
+	return {
+		meta: [
+			{ title: `${input.title} · ${BRAND_NAME}` },
+			{ name: "description", content: input.description },
+		],
+		links: [{ rel: "canonical", href: input.url }],
+	};
+}
+
+/**
  * A skill page's head: its own title and description, the canonical, and the
  * small social card. No image is emitted because the site ships none.
  */

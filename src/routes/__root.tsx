@@ -17,13 +17,31 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import type { CaptureResult } from "posthog-js";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
 	AppErrorFallback,
 	AppErrorSurface,
 } from "#/components/app-error-surface";
 import { SiteHeader } from "#/components/site-header";
 import { Button } from "#/components/ui/button";
+import {
+	analyticsGateOptions,
+	analyticsLoadCleanup,
+	isAnalyticsConfigured,
+	readAnalyticsConfig,
+} from "#/features/privacy/analytics";
+import { ConsentBanner } from "#/features/privacy/components/consent-banner";
+import { SiteFooter } from "#/features/privacy/components/site-footer";
+import {
+	type ConsentChoice,
+	isConsentChoice,
+} from "#/features/privacy/consent";
+import { readConsentChoice } from "#/features/privacy/data";
+import {
+	ConsentChoiceContext,
+	useConsentChoice,
+	useConsentSnapshot,
+} from "#/features/privacy/use-consent";
 import { readViewerId } from "#/features/skills/data";
 import { useSkillViewerCacheSync } from "#/features/skills/use-viewer";
 import { readThemeChoice } from "#/features/theme/data";
@@ -46,14 +64,16 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async () => {
-		// Both reads are small and independent, so they travel together. The
-		// viewer id is what keeps one person's vote state out of another's page.
-		const [theme, viewerId] = await Promise.all([
+		// These reads are small and independent, so they travel together. The
+		// viewer id is what keeps one person's vote state out of another's page,
+		// and the consent answer decides the analytics gate while rendering.
+		const [theme, viewerId, consent] = await Promise.all([
 			readThemeChoice().catch(() => DEFAULT_THEME),
 			readViewerId(),
+			readConsentChoice().catch(() => undefined),
 		]);
 
-		return { theme, viewerId };
+		return { theme, viewerId, consent };
 	},
 	head: () => ({
 		meta: [
@@ -99,42 +119,53 @@ function RootError({ reset }: ErrorComponentProps) {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-	const projectToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
-	const host = import.meta.env.VITE_POSTHOG_HOST;
+	const analytics = readAnalyticsConfig();
+	const serverConsent = useResolvedConsentChoice();
+	const consent = useConsentSnapshot(serverConsent);
+	// The provider compares its options by value on every render, and a fresh
+	// callback reference would count as a change, so the cleanup is kept stable.
+	const loaded = useMemo(() => analyticsLoadCleanup(consent), [consent]);
 
-	if (!projectToken || !host) {
+	if (analytics === undefined) {
 		if (import.meta.env.DEV) {
-			const missingVariable = !projectToken
-				? "VITE_POSTHOG_PROJECT_TOKEN"
-				: "VITE_POSTHOG_HOST";
+			const missingVariable = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN
+				? "VITE_POSTHOG_HOST"
+				: "VITE_POSTHOG_PROJECT_TOKEN";
 			throw new Error(
 				`${missingVariable} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${missingVariable} is configured`,
 			);
 		}
 
-		return <RootContent>{children}</RootContent>;
+		return (
+			<ConsentChoiceContext.Provider value={serverConsent}>
+				<RootContent>{children}</RootContent>
+			</ConsentChoiceContext.Provider>
+		);
 	}
 
 	return (
-		<PostHogProvider
-			apiKey={projectToken}
-			options={{
-				api_host: host,
-				ui_host: host,
-				capture_exceptions: true,
-				debug: import.meta.env.DEV,
-				defaults: "2025-05-24",
-				before_send: withoutSearchTerm,
-				logs: {
-					serviceName: "skild-web",
-					environment: import.meta.env.MODE,
-				},
-			}}
-		>
-			<PostHogErrorBoundary fallback={AppErrorFallback}>
-				<RootContent>{children}</RootContent>
-			</PostHogErrorBoundary>
-		</PostHogProvider>
+		<ConsentChoiceContext.Provider value={serverConsent}>
+			<PostHogProvider
+				apiKey={analytics.projectToken}
+				options={{
+					api_host: analytics.host,
+					ui_host: analytics.host,
+					debug: import.meta.env.DEV,
+					defaults: "2025-05-24",
+					before_send: withoutSearchTerm,
+					logs: {
+						serviceName: "skild-web",
+						environment: import.meta.env.MODE,
+					},
+					loaded,
+					...analyticsGateOptions(consent),
+				}}
+			>
+				<PostHogErrorBoundary fallback={AppErrorFallback}>
+					<RootContent>{children}</RootContent>
+				</PostHogErrorBoundary>
+			</PostHogProvider>
+		</ConsentChoiceContext.Provider>
 	);
 }
 
@@ -192,6 +223,8 @@ function RootContent({ children }: { children: React.ReactNode }) {
 						<SkillViewerCacheSync />
 						<SiteHeader />
 						{children}
+						<SiteFooter />
+						<ConsentBanner />
 						<TanStackDevtools
 							config={{
 								position: "bottom-right",
@@ -239,13 +272,39 @@ function useResolvedThemeChoice(): ThemeChoice {
 	});
 }
 
+/**
+ * The consent answer the root route resolved on the server, read back from the
+ * router context. The shell is not a normal route component, so it reads the
+ * root match's context rather than calling a route hook.
+ */
+function useResolvedConsentChoice(): ConsentChoice | undefined {
+	return useRouterState({
+		select: (state) => {
+			const context = state.matches[0]?.context as
+				| { consent?: unknown }
+				| undefined;
+
+			return isConsentChoice(context?.consent) ? context.consent : undefined;
+		},
+	});
+}
+
 function PostHogUserIdentification() {
 	const posthog = usePostHog();
+	const { choice } = useConsentChoice();
+	const consented = choice === "granted";
 	const { isLoaded, isSignedIn, user } = useUser();
 	const previousUserId = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (!isLoaded) return;
+
+		// Identifying a signed in person is analytics too, so it waits for the
+		// same yes that every other event waits for.
+		if (!consented || !isAnalyticsConfigured()) {
+			previousUserId.current = null;
+			return;
+		}
 
 		if (!isSignedIn || !user) {
 			if (previousUserId.current) {
@@ -268,7 +327,7 @@ function PostHogUserIdentification() {
 			});
 			previousUserId.current = user.id;
 		}
-	}, [isLoaded, isSignedIn, posthog, user]);
+	}, [consented, isLoaded, isSignedIn, posthog, user]);
 
 	return null;
 }

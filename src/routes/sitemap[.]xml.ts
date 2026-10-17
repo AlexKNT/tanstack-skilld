@@ -26,6 +26,8 @@ export const Route = createFileRoute("/sitemap.xml")({
 
 				const body = renderSitemap([
 					{ loc: absoluteSiteUrl("/") },
+					{ loc: absoluteSiteUrl("/privacy") },
+					{ loc: absoluteSiteUrl("/terms") },
 					...entries.value.map((entry) => ({
 						loc: absoluteSiteUrl(`/skills/${entry.slug}`),
 						lastmod: entry.updatedAt.toISOString().slice(0, 10),
