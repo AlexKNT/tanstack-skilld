@@ -173,7 +173,7 @@ Per page titles and descriptions, plus a sitemap covering the public pages.
   - [x] The crawl files thickened: the published entries through the shared visibility rule, the date only lastmod, the cache headers, the 503 path when the read fails, and the host rule (AC-7, AC-8, AC-9, AC-11)
   - [x] The structured data on skill pages, then the crawl and quality pass on both a production host and a local one (AC-13, all)
 - [ ] Verify it: `/check verify SEO metadata and sitemap`
-spec [0010](../specs/0010-seo-metadata-and-sitemap.md) · code in `src/features/seo/`, `src/routes/sitemap[.]xml.ts`, `src/routes/robots[.]txt.ts`, `src/start.ts`, `src/routes/index.tsx`, `src/routes/skills.$slug.tsx`, `src/db/queries.ts`
+spec [0010](../specs/0010-seo-metadata-and-sitemap/index.md) · code in `src/features/seo/`, `src/routes/sitemap[.]xml.ts`, `src/routes/robots[.]txt.ts`, `src/start.ts`, `src/routes/index.tsx`, `src/routes/skills.$slug.tsx`, `src/db/queries.ts`
 
 ### 9. Cookie notice and legal pages · needs a decision
 A consent notice for the analytics cookies, and simple privacy and terms pages.
