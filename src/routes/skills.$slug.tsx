@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { type QueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, SearchX } from "lucide-react";
 
@@ -11,14 +11,28 @@ import {
 	EmptyMedia,
 } from "#/components/ui/empty";
 import { Separator } from "#/components/ui/separator";
+import type { Result } from "#/db/result";
+import { NOINDEX_HEADER_VALUE } from "#/features/seo/indexing";
+import { skillHead, skillStructuredData } from "#/features/seo/meta";
+import { absoluteSiteUrl } from "#/features/seo/site";
 import { SkillAuthorBlock } from "#/features/skills/components/skill-author";
 import { SkillInstallButton } from "#/features/skills/components/skill-install-button";
 import { SkillMarkdown } from "#/features/skills/components/skill-markdown";
 import { SkillReadError } from "#/features/skills/components/skill-read-error";
 import { SkillTagList } from "#/features/skills/components/skill-tag-list";
 import { SkillUpvoteButton } from "#/features/skills/components/skill-upvote-button";
+import type { SkillDetail } from "#/features/skills/data";
 import { formatSkillDate } from "#/features/skills/date";
-import { skillDetailQueryOptions } from "#/features/skills/query";
+import { skillDetailQueryOptions, skillKeys } from "#/features/skills/query";
+import type { SkillReadFailureCode } from "#/features/skills/schema";
+
+type SkillContext = {
+	queryClient: QueryClient;
+	viewerId: string | undefined;
+};
+
+/** The detail read's cached result, the value both the head and the headers use. */
+type SkillDetailResult = Result<SkillDetail, SkillReadFailureCode>;
 
 export const Route = createFileRoute("/skills/$slug")({
 	loader: async ({ context: { queryClient, viewerId }, params }) => {
@@ -31,9 +45,62 @@ export const Route = createFileRoute("/skills/$slug")({
 			throw notFound();
 		}
 	},
+	// The head reads the row the loader already put in the cache, so the tags a
+	// crawler receives describe the same skill the page renders. When nothing is
+	// there, the page emits no subject specific tag at all.
+	head: ({ match, params }) => {
+		const cached = readCachedDetail(match.context, params.slug);
+
+		if (cached === undefined || !cached.ok) {
+			return { meta: [], links: [], scripts: [] };
+		}
+
+		const skill = cached.value;
+		const url = absoluteSiteUrl(`/skills/${skill.slug}`);
+
+		return {
+			...skillHead({ name: skill.name, summary: skill.summary, url }),
+			scripts: [
+				skillStructuredData({
+					name: skill.name,
+					summary: skill.summary,
+					url,
+					publisher: skill.author?.name,
+					updatedAt: skill.updatedAt,
+					upvoteCount: skill.upvoteCount,
+				}),
+			],
+		};
+	},
+	// A read that failed still renders a page, at 200, so the middleware cannot
+	// recognise it by status. Marking it here keeps a broken page out of an
+	// index without moving the private path rule out of the middleware.
+	headers: ({ match, params }) => {
+		const cached = readCachedDetail(match.context, params.slug);
+
+		return cached?.ok === true
+			? undefined
+			: { "X-Robots-Tag": NOINDEX_HEADER_VALUE };
+	},
 	component: SkillDetailPage,
 	notFoundComponent: SkillNotFound,
 });
+
+/**
+ * The skill this page describes, read back from the query cache the loader
+ * filled.
+ *
+ * A head invents nothing: an absent entry tells the caller to emit no subject
+ * specific tag rather than a placeholder name.
+ */
+function readCachedDetail(
+	context: SkillContext,
+	slug: string,
+): SkillDetailResult | undefined {
+	return context.queryClient.getQueryData<SkillDetailResult>(
+		skillKeys.detail(slug, context.viewerId),
+	);
+}
 
 /** One skill's page: its identity and install action, then its markdown body. */
 function SkillDetailPage() {

@@ -517,6 +517,37 @@ export async function listSkillSlugs(): Promise<string[]> {
 	return rows.map((row) => row.slug);
 }
 
+/** One public page the sitemap lists: a skill's slug and when it last changed. */
+export type PublishedSkillEntry = {
+	slug: string;
+	updatedAt: Date;
+};
+
+/**
+ * Reads the published skills' slugs and timestamps for the sitemap.
+ *
+ * Calls the same `publishedOnly()` rule every public read uses rather than
+ * repeating it, so a hidden skill cannot leak through a second filter drifting
+ * from the first. A failed read is returned rather than thrown, so the route
+ * can answer 503 instead of an empty sitemap.
+ */
+export async function listPublishedSkillEntries(): Promise<
+	Result<PublishedSkillEntry[], "SKILLS_QUERY_FAILED">
+> {
+	try {
+		const rows = await getDatabase()
+			.select({ slug: skills.slug, updatedAt: skills.updatedAt })
+			.from(skills)
+			.where(publishedOnly())
+			.orderBy(asc(skills.slug));
+
+		return ok(rows);
+	} catch (error) {
+		console.error("[skills] sitemap query failed", error);
+		return fail("SKILLS_QUERY_FAILED", "The sitemap could not be built.");
+	}
+}
+
 /** One row as the signed in area's list reads it. */
 export type ManagedSkillRow = {
 	id: string;

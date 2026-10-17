@@ -20,6 +20,8 @@ import {
 } from "#/components/ui/empty";
 import { Spinner } from "#/components/ui/spinner";
 import type { Result } from "#/db/result";
+import { homeHead } from "#/features/seo/meta";
+import { absoluteSiteUrl } from "#/features/seo/site";
 import {
 	SkillCardGrid,
 	SkillCardGridSkeleton,
@@ -53,6 +55,14 @@ export const Route = createFileRoute("/")({
 			),
 			queryClient.ensureQueryData(skillTagsQueryOptions()),
 		]),
+	// A filtered view is a different page rather than a duplicate of the home
+	// page, so it carries no canonical and asks not to be indexed instead.
+	head: ({ match }) =>
+		homeHead(
+			match.search.q === undefined && match.search.tag === undefined
+				? absoluteSiteUrl("/")
+				: undefined,
+		),
 	pendingComponent: CatalogueLoading,
 	component: Catalogue,
 });
