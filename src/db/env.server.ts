@@ -13,7 +13,7 @@ export function getDatabaseUrl(): string {
 
 	if (!url || url.trim() === "") {
 		throw new Error(
-			"DATABASE_URL is missing. Add the Postgres connection string to .env.local (see .env.example) and try again.",
+			"DATABASE_URL is missing. Add the Postgres connection string to the environment (see .env.example) and try again.",
 		);
 	}
 

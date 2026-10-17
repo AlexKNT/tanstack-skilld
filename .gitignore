@@ -9,6 +9,7 @@ dist-ssr
 .vinxi
 .wrangler
 .tanstack
+.netlify
 
 # environment variables (keep .env.example tracked)
 .env

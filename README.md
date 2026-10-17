@@ -32,7 +32,61 @@ npm run generate-routes  # rebuild src/routeTree.gen.ts
 ## Environment variables
 
 Clerk keys live in `.env.local`, which is not committed. The Clerk CLI wrote them when it ran
-`clerk init`. See `.env.example` for the variable names.
+`clerk init`. See `.env.example` for the variable names and what each one does.
+
+## Deploy
+
+Netlify builds every push to `main` and serves the app from serverless functions. The adapter is
+`@netlify/vite-plugin-tanstack-start`, registered in `vite.config.ts`; `netlify.toml` runs
+`npm run build` and publishes `dist/client`. `.nvmrc` pins Node 24, the same version CI uses.
+
+Set these values in the Netlify dashboard under **Project configuration → Environment variables**.
+Build scoped values are inlined into the bundle, so changing one needs a redeploy.
+
+| Variable | Scope | Purpose | Secret |
+|---|---|---|---|
+| `VITE_SITE_URL` | Builds | The site's public origin, with no trailing path. Drives canonicals, the sitemap, the robots file, and the noindex host check. | No |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Builds | Clerk's browser key. | No |
+| `VITE_CLERK_SIGN_IN_URL` | Builds | In app sign in address, `/sign-in`. | No |
+| `VITE_CLERK_SIGN_UP_URL` | Builds | In app sign up address, `/sign-up`. | No |
+| `VITE_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | Builds | Where sign in lands with no return path, `/`. | No |
+| `VITE_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | Builds | Where sign up lands with no return path, `/`. | No |
+| `VITE_POSTHOG_PROJECT_TOKEN` | Builds | PostHog project token. | No |
+| `VITE_POSTHOG_HOST` | Builds | PostHog ingestion host, `https://eu.i.posthog.com`. | No |
+| `CLERK_SECRET_KEY` | Functions | Clerk's server key, from the same instance. | Yes |
+| `DATABASE_URL` | Functions | Supabase session pooler connection string, in `eu-west-1`. | Yes |
+
+The production build fails with an error naming `VITE_SITE_URL` when it is absent, so a broken
+build never becomes a deploy. A running server without `DATABASE_URL` answers on the app's error
+surface and names the variable in its log.
+
+The functions region lives in `netlify.toml` as `dub` (EU Ireland), the same region as the Supabase
+pooler. Netlify names regions by airport code; the dashboard setting under **Cloud compute →
+Functions → Region** shows and changes the same value.
+
+Deploy previews and branch deploys stay off, so there is one environment and one set of values.
+
+### Migrations
+
+Migrations are manual and never run during a deploy. After changing `src/db/schema.ts`:
+
+```bash
+npm run db:generate
+npm run db:migrate   # run against the production database before pushing code that needs it
+```
+
+A local schema push or a local experiment writes the live database, so treat both with care.
+
+### Rollback
+
+A failed build leaves the previous deploy serving. To go back to the last good deploy, open
+**Deploys** in Netlify, open the last deploy that succeeded, and choose **Publish Deploy**. The
+rollback is instant, needs no code change, and does not trigger a new build.
+
+A rollback restores code, not environment values. Fix a wrong `CLERK_SECRET_KEY` or `DATABASE_URL`
+under **Environment variables** and the restored deploy picks it up, because functions read those
+at runtime. A wrong `VITE_` value was inlined when that deploy was built, so it needs a new deploy
+after the value is corrected.
 
 ## Styling
 

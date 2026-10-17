@@ -33,3 +33,5 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_SITE_URL: https://skild.example.com

@@ -25,7 +25,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 7 | Moderation | Slice 6 | done |
 | 8 | SEO metadata and sitemap | Hardening | done |
 | 9 | Cookie notice and legal pages | Hardening | done |
-| 10 | Deploy | Ship | planned |
+| 10 | Deploy | Ship | in-progress |
 
 ## Foundations
 
@@ -190,10 +190,18 @@ spec [0011](../specs/0011-cookie-notice-and-legal-pages/index.md) · code in `sr
 
 ## Ship
 
-### 10. Deploy · needs a decision
+### 10. Deploy · in-progress
 Put the app on a host with its environment variables and a first production build.
 **Done when:** the app is reachable at a public URL, sign in works there, and analytics events arrive.
-- [ ] Design it (spec): `/architect deploy`
+- [x] Design it (spec): `/architect deploy`
+- [ ] Build it: `/develop deploy`
+  - [x] The adapter, the build guard, and the config: pinned adapter, `netlify.toml`, Node 24, the pool and the types (AC-8, AC-9)
+  - [ ] The first deploy on the primary address: site creation, previews off, values by scope, host preservation (AC-1, AC-2)
+  - [ ] The live paths: Clerk sign in and the admin role, the database read and publish, analytics after consent (AC-3, AC-4, AC-5)
+  - [ ] The hard parts: crawl and secret pass, failure rehearsal and rollback recovery (AC-2, AC-6, AC-7, AC-8)
+  - [x] The documentation: `.env.example` and the README deploy section (AC-10)
+- [ ] Verify it: `/check verify deploy`
+spec [0012](../specs/0012-deploy/index.md) · code in `vite.config.ts`, `netlify.toml`, `.nvmrc`, `src/db/client.server.ts`, `README.md`
 
 ## Deferred
 Out of scope for this build pass, kept so the plan stays honest.
@@ -206,6 +214,8 @@ Out of scope for this build pass, kept so the plan stays honest.
 - **Share image**: one static image for the whole site, then the `og:image` tag and the large social card · from spec 0010 · needs a decision
 - **Account level cookie control**: one place in the account area to see and change the analytics choice, so a signed in person stops being asked on each device · from spec 0011 · needs a decision
 - **Publisher written search description**: let a publisher write the description a search engine shows, for when the stored summary is too long for a snippet · from spec 0010 · needs a decision
+- **Production Clerk instance and custom domain**: move off the development instance once a domain exists, which removes the development badge and the usage limits · from spec 0012 · needs a decision
+- **Separate production database**: give the live site its own database so local experiments and schema pushes cannot touch it · from spec 0012 · needs a decision
 
 ## Legend
 
