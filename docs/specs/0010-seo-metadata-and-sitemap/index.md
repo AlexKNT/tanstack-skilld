@@ -1,7 +1,7 @@
 # 0010. Give every public page its own metadata, and serve a sitemap and a robots file
 
 **Date**: 2026-10-16
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 

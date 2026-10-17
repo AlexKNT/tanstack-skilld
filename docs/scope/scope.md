@@ -19,12 +19,12 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 1 | Skill data model | Slice 1 | done |
 | 2 | Skill catalogue | Slice 1 | done |
 | 3 | Publish a skill | Slice 2 | done |
-| 4 | Signed in area | Slice 3 | in-progress |
+| 4 | Signed in area | Slice 3 | done |
 | 5 | Upvotes | Slice 4 | done |
-| 6 | Search and filter | Slice 5 | in-progress |
+| 6 | Search and filter | Slice 5 | done |
 | 7 | Moderation | Slice 6 | done |
-| 8 | SEO metadata and sitemap | Hardening | in-progress |
-| 9 | Cookie notice and legal pages | Hardening | in-progress |
+| 8 | SEO metadata and sitemap | Hardening | done |
+| 9 | Cookie notice and legal pages | Hardening | done |
 | 10 | Deploy | Ship | planned |
 
 ## Foundations
@@ -104,7 +104,7 @@ spec [0005](../specs/0005-publish-a-skill/index.md) · code in `src/routes/skill
 
 ## Slice 3: Your own space
 
-### 4. Signed in area · in-progress
+### 4. Signed in area · done
 A group of pages behind sign in, sharing one nested layout and guarded on the server so an unauthenticated request never reaches them.
 **Done when:** a signed out visitor is sent away from the area, and a signed in user sees their own skills there.
 - [x] Design it (spec): `/architect signed in area`
@@ -114,7 +114,7 @@ A group of pages behind sign in, sharing one nested layout and guarded on the se
   - [x] Edit and delete a skill, with the failure states and the leave guard (AC-8, AC-9, AC-10, AC-11, AC-12, AC-13, AC-14)
   - [x] The profile page and its name, photo, and email flows (AC-15)
   - [x] The theme system, the settings page, the analytics, and the accessibility pass (AC-16, AC-17, AC-18, AC-20)
-- [ ] Verify it: `/check verify signed in area`
+- [x] Verify it: `/check verify signed in area`
 spec [0006](../specs/0006-signed-in-area/index.md) · code in `src/routes/account*.tsx`, `src/features/account/`, `src/features/theme/`, `src/features/skills/`
 
 ## Slice 4: Community signal
@@ -133,7 +133,7 @@ spec [0007](../specs/0007-upvotes/index.md) · code in `src/db/schema.ts`, `src/
 
 ## Slice 5: Find skills
 
-### 6. Search and filter · in-progress
+### 6. Search and filter · done
 Narrow the catalogue by text and by tag, with the choice in the URL so a filtered view can be shared.
 **Done when:** the list filters as the user types or picks a tag, the URL carries the filter, and an empty result renders a helpful state.
 - [x] Design it (spec): `/architect search and filter`
@@ -143,7 +143,7 @@ Narrow the catalogue by text and by tag, with the choice in the URL so a filtere
   - [x] Tags end to end: both forms collect them, and the cards and the detail page show them (AC-3, AC-4)
   - [x] The filter's interface: the box, the chips, the pacing, the empty surface and the announcement (AC-9, AC-11, AC-12, AC-13, AC-15)
   - [x] The event, the accessibility pass and the boundary check (AC-13, AC-14, AC-16)
-- [ ] Verify it: `/check verify search and filter`
+- [x] Verify it: `/check verify search and filter`
 spec [0008](../specs/0008-search-and-filter/index.md) · code in `src/features/skills/`, `src/hooks/`, `src/db/schema.ts`, `src/db/queries.ts`, `src/routes/index.tsx`, `drizzle/`
 
 ## Slice 6: Keep it tidy
@@ -163,7 +163,7 @@ spec [0009](../specs/0009-moderation/index.md)
 
 ## Hardening
 
-### 8. SEO metadata and sitemap · in-progress
+### 8. SEO metadata and sitemap · done
 Per page titles and descriptions, plus a sitemap covering the public pages.
 **Done when:** every public page has a unique title and description, and a sitemap lists the public URLs.
 - [x] Design it (spec): `/architect SEO metadata and sitemap`
@@ -172,10 +172,10 @@ Per page titles and descriptions, plus a sitemap covering the public pages.
   - [x] Metadata on the pages that need it: the skill page's own title and description, the social tags, the filtered view's rule, and the one middleware noindex rule for the private paths (AC-2, AC-3, AC-4, AC-5, AC-12)
   - [x] The crawl files thickened: the published entries through the shared visibility rule, the date only lastmod, the cache headers, the 503 path when the read fails, and the host rule (AC-7, AC-8, AC-9, AC-11)
   - [x] The structured data on skill pages, then the crawl and quality pass on both a production host and a local one (AC-13, all)
-- [ ] Verify it: `/check verify SEO metadata and sitemap`
+- [x] Verify it: `/check verify SEO metadata and sitemap`
 spec [0010](../specs/0010-seo-metadata-and-sitemap/index.md) · code in `src/features/seo/`, `src/routes/sitemap[.]xml.ts`, `src/routes/robots[.]txt.ts`, `src/start.ts`, `src/routes/index.tsx`, `src/routes/skills.$slug.tsx`, `src/db/queries.ts`
 
-### 9. Cookie notice and legal pages · in-progress
+### 9. Cookie notice and legal pages · done
 A consent notice for the analytics cookies, and simple privacy and terms pages.
 **Done when:** a first time visitor can accept or decline analytics cookies, the choice persists across visits, and privacy and terms pages are reachable from the footer.
 - [x] Design it (spec): `/architect cookie notice and legal pages`
@@ -185,7 +185,7 @@ A consent notice for the analytics cookies, and simple privacy and terms pages.
   - [x] The privacy and terms pages with drafted copy and marked placeholders (AC-8)
   - [x] Metadata, canonicals and the two sitemap entries (AC-9, AC-10)
   - [x] The proof pass: network trace, keyboard, 320px, both themes (AC-1, AC-2, AC-8)
-- [ ] Verify it: `/check verify cookie notice and legal pages`
+- [x] Verify it: `/check verify cookie notice and legal pages`
 spec [0011](../specs/0011-cookie-notice-and-legal-pages/index.md) · code in `src/features/privacy/`, `src/routes/privacy.tsx`, `src/routes/terms.tsx`, `src/routes/__root.tsx`, `src/routes/sitemap[.]xml.ts`, `src/features/seo/meta.ts`
 
 ## Ship

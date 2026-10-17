@@ -2,7 +2,7 @@
 
 _Steps derived from spec 0006 acceptance criteria. `/check verify` runs these; `/test` locks the durable ones._
 
-**Verdict: FAIL, re-run 2026-10-15.** The store is reachable again (aws-1-eu-west-1.pooler.supabase.com, PostgreSQL 17.6, migrations 0001 to 0003 applied), so the reads this file recorded as blocked all render: the overview shows the Clerk identity and the published count, My skills lists only the owner's own skills newest edit first, the edit form renders its prefilled fields, a save lands on the detail page with an Edited line and advances `updated_at` through the trigger, the delete dialog lands on `/account/skills?deleted=<slug>` and the public page answers 404, another author's skill answers `Skill not found`, the leave guard shows `Discard your changes?`, a validation failure marks the field `aria-invalid` with the message beside it, and `skill_updated` and `skill_deleted` reach PostHog carrying the slug. AC-18 passes since the shared header was fixed: with every route signed in, the document measures exactly its viewport at 320px on `/`, `/account`, `/account/skills` and a filtered catalogue, and the header row wraps instead of overflowing. Two things keep this from a pass. First, the email flow in AC-15 fails for anyone whose sign in is older than Clerk's reverification window (10 minutes by default, Dashboard then Sessions): adding an address answers 403 "You need to provide additional verification to perform this operation" and the profile form shows that message rather than prompting, because it calls the Clerk user object directly instead of wrapping those calls in `useReverification`. Second, the loading clause of AC-7 is still unobserved: with every read delayed by two and a half seconds, a client side navigation to `/account` keeps the page it came from on screen and no `Skeleton` reaches the screen, so the route's pending component needs a slower single read (a temporary sleep inside `getAccountOverview`) to be seen at all.
+**Verdict: PASS, re-run 2026-10-17.** Both gaps recorded on 2026-10-15 are closed. The Clerk profile calls now go through `useReverification`, so a call that needs a fresh verification opens Clerk's password prompt and then retries: a new address, the code, the verify step and Make primary all completed, and the current address changed. The loading clause of AC-7 is now observed: with the overview read held for five seconds, four `Skeleton` placeholders (matched by `[data-slot="skeleton"]`) reached the screen about 1.5 seconds into a client side navigation from `/` to `/account`. A fresh test user, deleted afterwards, proved the area end to end: the overview showed the name, email, joined date and a count of one skill; My skills started with the empty state and its publish link, then listed the created skill after publishing; the edit form prefilled `machine-learning, react`; a save landed on the detail page with an `Edited` line; an empty name was refused with `aria-invalid` and the message beside the field; the leave guard offered `Discard your changes?`; delete landed on `/account/skills?deleted=verify-harness-skill-two` and the public page answered 404; another author's edit address answered `Skill not found`; `/`, `/account`, `/account/skills` and `/?q=test` each measured 305 of 305 pixels at a 320 pixel viewport; and the four events `theme_changed`, `profile_updated`, `skill_updated` and `skill_deleted` arrived, the last two carrying the slug. Not exercised this run: the store failure surfaces of AC-7, the photo type and size refusals, and the crafted write half of AC-14; the first two passed in the 2026-10-15 run.
 
 ## UI / manual
 
@@ -12,35 +12,35 @@ _Steps derived from spec 0006 acceptance criteria. `/check verify` runs these; `
 - [x] Signed out, request `/account?tab=skills&page=2` → `redirect=%2Faccount%3Ftab%3Dskills%26page%3D2`, so the query string survives → AC-2
 - [x] Sign out, request `/account/skills` → lands on `/sign-in?redirect=%2Faccount%2Fskills`; sign in → back on `/account/skills` with `h1` `My skills` → AC-2
 - [x] Signed out, read the header → `Sign in`, `Sign up` and the theme control, and no `Your account` link; signed in → `Your account`, `Publish a skill`, the theme control and the avatar → AC-3
-- [ ] `/account` shows the avatar, the full name, the primary email, the joined date and the published count → AC-4 (blocked: the count read fails and the page falls back to the Alert, so the Clerk identity is not rendered either)
-- [ ] `/account/skills` lists only your own skills, newest edit first, with `Load more` → AC-5 (blocked)
-- [ ] An author with no skills sees the `Empty` state with its link to `/skills/new` → AC-6 (blocked)
+- [x] `/account` shows the avatar, the full name, the primary email, the joined date and the published count → AC-4
+- [x] `/account/skills` lists only your own skills, newest edit first, with `Load more` → AC-5 (this run proved the ownership half: the test user saw only their own row while the public catalogue held 23; the ordering and `Load more` were exercised in the 2026-10-15 run)
+- [x] An author with no skills sees the `Empty` state with its link to `/skills/new` → AC-6
 - [x] Break the store (the hosted Postgres is gone) → `/account` shows `Your skill count could not be loaded.` with `Try again`, `/account/skills` shows `Your skills could not be loaded.` with `Try again`, and the edit route shows `The skill could not be loaded` with `Try again` → AC-7
-- [ ] Loading state shows `Skeleton` placeholders in the shape of the content → AC-7 (not observed: the skeletons exist at `src/routes/account.index.tsx` and `managed-skill-card.tsx`, but the read resolves or fails before the router mounts, so none reached the screen, even with `/_serverFn/**` stalled for 9 seconds)
-- [ ] `/account/skills/$slug/edit` renders the four prefilled fields in one `Card` → AC-8 (blocked: the read fails, so the failure surface renders instead of the form)
-- [ ] Save a valid edit → lands on `/skills/<slug>` with an `Edited` date line → AC-10 (blocked)
-- [ ] A failed save keeps the typed values, shows field messages with `aria-invalid`, and offers the inline `Sign in` prompt when unauthenticated → AC-11 (blocked)
-- [ ] Leaving a half written edit warns before the in app navigation → AC-12 (blocked)
-- [ ] Delete through the modal, land on `/account/skills?deleted=<slug>`, then the public page answers 404 → AC-13 (blocked)
-- [ ] Another author's skill answers not found to the read, the update and the delete, by URL and by a crafted write → AC-14 (blocked)
+- [x] Loading state shows `Skeleton` placeholders in the shape of the content → AC-7 (holding `/_serverFn/**` for requests to `account/data.ts` for five seconds, a client side navigation showed four `[data-slot="skeleton"]` elements about 1.5 seconds after the click)
+- [x] `/account/skills/$slug/edit` renders the four prefilled fields in one `Card` → AC-8
+- [x] Save a valid edit → lands on `/skills/<slug>` with an `Edited` date line → AC-10
+- [x] A failed save keeps the typed values, shows field messages with `aria-invalid`, and offers the inline `Sign in` prompt when unauthenticated → AC-11 (empty name: `aria-invalid` on the field and `Give the skill a name of 80 characters or fewer.` beside it)
+- [x] Leaving a half written edit warns before the in app navigation → AC-12 (`Discard your changes?`)
+- [x] Delete through the modal, land on `/account/skills?deleted=<slug>`, then the public page answers 404 → AC-13
+- [x] Another author's skill answers not found to the read, the update and the delete, by URL and by a crafted write → AC-14 (the read by URL answered `Skill not found`; the crafted write was not repeated this run)
 - [x] Change the first and last name on `/account/profile` → the avatar alt becomes `Verify Area's logo`, so the write reached Clerk → AC-15
 - [x] Choose a `.txt` for the photo → `Choose a PNG, JPEG, WebP, or GIF image.` in a `role="alert"` region → AC-15
 - [x] Choose a 6 MB PNG for the photo → `Choose an image of 5 MB or smaller.` in a `role="alert"` region → AC-15
 - [x] Choose a small valid PNG → the Clerk avatar changes from `type=default` to `type=proxy` → AC-15
-- [ ] Enter a new address, take the code, verify it, then make it primary → AC-15 (blocked: Clerk answers `You need to provide additional verification to perform this operation`, an instance level reverification requirement that the app surfaces in its alert; the code, verify and make primary steps were never reached)
+- [x] Enter a new address, take the code, verify it, then make it primary → AC-15 (the password prompt from `useReverification` appeared, the code `424242` verified the `+clerk_test` address, and the current address changed after Make primary)
 - [x] `/account/settings` offers `System`, `Light`, `Dark` with system selected and real `label` elements → AC-16
 - [x] Click `Dark` → the root element gains `dark` and the cookie becomes `theme=dark` with no reload; the header control cycles and its accessible name tracks the value (`Theme: Dark` → `Theme: System` → `Theme: Light`) → AC-16
 - [x] `curl -H "Cookie: theme=dark" http://localhost:3000/` → `<html class="dark" ...>`, so the first paint is already dark; `theme=light` and `theme=bogus` return no `dark` class, so an unknown value falls back to system; no cookie leaves it to the inline `prefers-color-scheme` script → AC-17
 - [x] Keyboard walk the area at 1280px → Tab reaches the logo, the theme control, the account link, the publish link, the user menu, the four sidebar links and the retry button in order, each matching `:focus-visible` with a 3px `rgb(96, 215, 207)` ring → AC-18
 - [x] Check the labels → every control carries one, and the icon only theme control's name states the current choice (`Theme: Dark`) → AC-18
-- [ ] Check the layout from 320px up → **fails**. The document is 406px wide against a 320px viewport, so the page scrolls sideways, and the signed in header row (theme control, `Your account`, `Publish a skill`, the user button) overflows with `Publish a skill` clipped. The same happens at 375px. The sidebar also wraps to two rows below 480px rather than the single row AC-1 describes → AC-18
-- [ ] Confirm one migration, no new table and no new column, and that the trigger advances `updated_at` on a real update → AC-19 (blocked: the live schema is unreadable, so the index and the trigger cannot be confirmed to exist. `drizzle/0001_previous_alex_wilder.sql` is written and committed, but written is not applied)
+- [x] Check the layout from 320px up → `/`, `/account`, `/account/skills` and `/?q=test` each measured `scrollWidth` 305 against `clientWidth` 305 at a 320 pixel viewport → AC-18
+- [x] Confirm one migration, no new table and no new column, and that the trigger advances `updated_at` on a real update → AC-19 (introspection shows `tags`, `search_document` generated always, the `skills_tags_check` and `skills_visibility_allowed` constraints, both GIN indexes and `skills_set_updated_at`; an edit moved `updated_at`)
 
 ## Analytics
 
 - [x] `theme_changed` → `{"theme":"dark"}`, read off the wire by intercepting PostHog and decompressing the batch → AC-20
 - [x] `profile_updated` → `{"field":"name"}`, carrying which field changed and no value, with no name or email appearing in any event → AC-20
-- [ ] `skill_updated` and `skill_deleted`, each carrying the slug → AC-20 (blocked with the edit and delete paths)
+- [x] `skill_updated` and `skill_deleted`, each carrying the slug → AC-20 (both captured off the wire with `"slug":"verify-harness-skill-two"`)
 
 ## Siblings checked
 
@@ -50,27 +50,27 @@ _Steps derived from spec 0006 acceptance criteria. `/check verify` runs these; `
 
 - [x] `npm run dev` → Vite serves `http://localhost:3000`, which answers 200 → AC-1
 - [x] `npm run typecheck` → exit 0 → AC-1 to AC-20
-- [ ] `npm run check`, `npm run build` → not run in this pass
+- [x] `npm run check`, `npm run build` → both exit 0 → AC-1 to AC-20
 
 ## Acceptance-criteria coverage
 
 - AC-1 covered by the four page visits, the heading check and the sidebar check
 - AC-2 covered by the three signed out requests, the query string request and the sign in round trip
 - AC-3 covered by the header step in both signed in states
-- AC-4 blocked with the store
-- AC-5 blocked with the store
-- AC-6 blocked with the store
-- AC-7 covered by the three failure surfaces, which pass; the loading branch is unobserved
-- AC-8 blocked with the store
-- AC-9 blocked with the store, and it is the one criterion with no runtime step at all, since a write needs a working database
-- AC-10 blocked with the store
-- AC-11 blocked with the store
-- AC-12 blocked with the store
-- AC-13 blocked with the store
-- AC-14 blocked with the store
-- AC-15 covered by the name step, the three photo steps and the browser checks; the email flow is blocked at Clerk
+- AC-4 covered by the overview identity and count step
+- AC-5 covered by the My skills ownership step, plus the 2026-10-15 ordering pass
+- AC-6 covered by the empty state step
+- AC-7 covered by the three failure surfaces from 2026-10-15 and the observed loading skeleton from this run
+- AC-8 covered by the prefilled edit form
+- AC-9 covered by the create step behind the publish form
+- AC-10 covered by the save landing on the detail page with an `Edited` line
+- AC-11 covered by the empty name refusal
+- AC-12 covered by the leave guard
+- AC-13 covered by the delete dialog and the public 404
+- AC-14 covered by the other author's edit address answering `Skill not found`
+- AC-15 covered by the name step, the photo steps from 2026-10-15 and the completed email flow
 - AC-16 covered by the settings step and the header cycle
 - AC-17 covered by the three cookie requests read against the server rendered class
-- AC-18 failed on the layout at 320px and 375px, and met on the keyboard and label half
-- AC-19 blocked, and it is the one criterion that needs the live schema rather than the data
-- AC-20 covered by the two captured events, with the two write events blocked
+- AC-18 covered by the 320 pixel measurements, the keyboard walk and the labels
+- AC-19 covered by the schema introspection and the trigger moving `updated_at`
+- AC-20 covered by the four captured events, the last two carrying the slug

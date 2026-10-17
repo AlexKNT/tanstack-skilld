@@ -1,7 +1,7 @@
 # 0011. Ask before analytics, and publish the privacy and terms pages
 
 **Date**: 2026-10-17
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 

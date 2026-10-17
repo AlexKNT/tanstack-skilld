@@ -150,7 +150,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				options={{
 					api_host: analytics.host,
 					ui_host: analytics.host,
-					debug: import.meta.env.DEV,
 					defaults: "2025-05-24",
 					before_send: withoutSearchTerm,
 					logs: {

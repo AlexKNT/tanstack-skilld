@@ -1,11 +1,26 @@
 import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
-import { createMiddleware, createStart } from "@tanstack/react-start";
+import {
+	createCsrfMiddleware,
+	createMiddleware,
+	createStart,
+} from "@tanstack/react-start";
 
 import { isPrivatePath, NOINDEX_HEADER_VALUE } from "#/features/seo/indexing";
 import { isSiteRequestHost } from "#/features/seo/site";
 
 /** The two paths whose answers are files a crawler reads rather than pages. */
 const CRAWL_PATHS = new Set(["/sitemap.xml", "/robots.txt"]);
+
+/**
+ * Refuses a server function call that another site made on a visitor's behalf.
+ *
+ * The check is limited to server function requests: a page, a crawl file, and a
+ * navigation carry no `x-tsr-serverFn` header, and a same origin GET document
+ * request must keep working for a crawler that sends no `Origin`.
+ */
+const csrfMiddleware = createCsrfMiddleware({
+	filter: (ctx) => ctx.request.headers.get("x-tsr-serverFn") === "true",
+});
 
 /**
  * Answers a server function call that produced no response.
@@ -107,6 +122,11 @@ function withHeaders(
 
 export const startInstance = createStart(() => {
 	return {
-		requestMiddleware: [crawlHeaders, clerkMiddleware(), responseShapedResult],
+		requestMiddleware: [
+			csrfMiddleware,
+			crawlHeaders,
+			clerkMiddleware(),
+			responseShapedResult,
+		],
 	};
 });

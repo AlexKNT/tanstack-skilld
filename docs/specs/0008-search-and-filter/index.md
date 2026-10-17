@@ -1,7 +1,7 @@
 # 0008. Narrow the skill catalogue by text and by tag, with the filter in the URL
 
 **Date**: 2026-10-12
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 

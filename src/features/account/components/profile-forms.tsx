@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/tanstack-react-start";
+import { useReverification, useUser } from "@clerk/tanstack-react-start";
 import { usePostHog } from "@posthog/react";
 import { CircleAlert, Upload } from "lucide-react";
 import { useId, useState } from "react";
@@ -26,6 +26,14 @@ const GENERIC_ERROR = "Something went wrong. Please try again.";
 const CODE_NOT_RIGHT = "That code is not right.";
 const CODE_EXPIRED = "That code has expired. Send a new one.";
 const EMAIL_IN_USE = "That email address is already in use.";
+
+/** The two email address calls a code based verification needs. */
+type VerifiableEmail = {
+	prepareVerification: (options: {
+		strategy: "email_code";
+	}) => Promise<unknown>;
+	attemptVerification: (options: { code: string }) => Promise<unknown>;
+};
 
 /** Reads the Clerk error code from whatever shape an error arrived in. */
 function clerkErrorCode(error: unknown): string | undefined {
@@ -128,6 +136,15 @@ function NameSection({
 	const { user } = useUser();
 	const posthog = usePostHog();
 	const formId = useId();
+	const saveName = useReverification(
+		async (values: { firstName: string; lastName: string }) => {
+			if (!user) {
+				return undefined;
+			}
+
+			return user.update(values);
+		},
+	);
 
 	const [firstName, setFirstName] = useState(initialFirstName);
 	const [lastName, setLastName] = useState(initialLastName);
@@ -148,7 +165,7 @@ function NameSection({
 		setSaved(false);
 
 		try {
-			await user.update({
+			await saveName({
 				firstName: firstName.trim(),
 				lastName: lastName.trim(),
 			});
@@ -223,6 +240,13 @@ function PhotoSection({
 	const { user } = useUser();
 	const posthog = usePostHog();
 	const inputId = useId();
+	const savePhoto = useReverification(async (file: File) => {
+		if (!user) {
+			return undefined;
+		}
+
+		return user.setProfileImage({ file });
+	});
 
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | undefined>(undefined);
@@ -256,7 +280,7 @@ function PhotoSection({
 
 		setPending(true);
 		try {
-			await user.setProfileImage({ file });
+			await savePhoto(file);
 			setSaved(true);
 			posthog.capture("profile_updated", { field: "photo" });
 		} catch (caught) {
@@ -317,6 +341,28 @@ function EmailSection({ primaryEmail }: { primaryEmail: string | undefined }) {
 	const { user } = useUser();
 	const posthog = usePostHog();
 	const formId = useId();
+	const addEmailAddress = useReverification(async (address: string) => {
+		if (!user) {
+			return undefined;
+		}
+
+		return user.createEmailAddress({ email: address });
+	});
+	const prepareEmailVerification = useReverification(
+		async (address: VerifiableEmail) =>
+			address.prepareVerification({ strategy: "email_code" }),
+	);
+	const verifyEmailCode = useReverification(
+		async (address: VerifiableEmail, code: string) =>
+			address.attemptVerification({ code }),
+	);
+	const makeEmailPrimary = useReverification(async (id: string) => {
+		if (!user) {
+			return undefined;
+		}
+
+		return user.update({ primaryEmailAddressId: id });
+	});
 
 	const [step, setStep] = useState<"enter" | "code" | "primary" | "done">(
 		"enter",
@@ -345,13 +391,16 @@ function EmailSection({ primaryEmail }: { primaryEmail: string | undefined }) {
 		setError(undefined);
 
 		try {
-			const created = await user.createEmailAddress({ email: email.trim() });
+			const created = await addEmailAddress(email.trim());
+			if (created === undefined) {
+				throw new Error("No signed in user");
+			}
 			await user.reload();
 			const address = user.emailAddresses.find((it) => it.id === created.id);
 			if (address === undefined) {
 				throw new Error("address missing after creation");
 			}
-			await address.prepareVerification({ strategy: "email_code" });
+			await prepareEmailVerification(address);
 			setPendingId(created.id);
 			setStep("code");
 		} catch (caught) {
@@ -373,7 +422,7 @@ function EmailSection({ primaryEmail }: { primaryEmail: string | undefined }) {
 		setError(undefined);
 
 		try {
-			await address.attemptVerification({ code: code.trim() });
+			await verifyEmailCode(address, code.trim());
 			setStep("primary");
 		} catch (caught) {
 			setError(emailErrorMessage(caught));
@@ -392,7 +441,7 @@ function EmailSection({ primaryEmail }: { primaryEmail: string | undefined }) {
 		setError(undefined);
 
 		try {
-			await address.prepareVerification({ strategy: "email_code" });
+			await prepareEmailVerification(address);
 		} catch (caught) {
 			setError(emailErrorMessage(caught));
 		} finally {
@@ -409,7 +458,7 @@ function EmailSection({ primaryEmail }: { primaryEmail: string | undefined }) {
 		setError(undefined);
 
 		try {
-			await user.update({ primaryEmailAddressId: pendingId });
+			await makeEmailPrimary(pendingId);
 			await user.reload();
 			setStep("done");
 			posthog.capture("profile_updated", { field: "email" });
