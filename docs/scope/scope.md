@@ -167,13 +167,13 @@ spec [0009](../specs/0009-moderation/index.md)
 Per page titles and descriptions, plus a sitemap covering the public pages.
 **Done when:** every public page has a unique title and description, and a sitemap lists the public URLs.
 - [x] Design it (spec): `/architect SEO metadata and sitemap`
-- [ ] Build it: `/develop SEO metadata and sitemap`
-  - [ ] The thin thread: both crawl routes answering, the site address read and validated, and the home page's title and description in the server rendered HTML (AC-1, AC-6, AC-10, AC-14)
-  - [ ] Metadata on the pages that need it: the skill page's own title and description, the social tags, the filtered view's rule, and the one middleware noindex rule for the private paths (AC-2, AC-3, AC-4, AC-5, AC-12)
-  - [ ] The crawl files thickened: the published entries through the shared visibility rule, the date only lastmod, the cache headers, the 503 path when the read fails, and the host rule (AC-7, AC-8, AC-9, AC-11)
-  - [ ] The structured data on skill pages, then the crawl and quality pass on both a production host and a local one (AC-13, all)
+- [x] Build it: `/develop SEO metadata and sitemap`
+  - [x] The thin thread: both crawl routes answering, the site address read and validated, and the home page's title and description in the server rendered HTML (AC-1, AC-6, AC-10, AC-14)
+  - [x] Metadata on the pages that need it: the skill page's own title and description, the social tags, the filtered view's rule, and the one middleware noindex rule for the private paths (AC-2, AC-3, AC-4, AC-5, AC-12)
+  - [x] The crawl files thickened: the published entries through the shared visibility rule, the date only lastmod, the cache headers, the 503 path when the read fails, and the host rule (AC-7, AC-8, AC-9, AC-11)
+  - [x] The structured data on skill pages, then the crawl and quality pass on both a production host and a local one (AC-13, all)
 - [ ] Verify it: `/check verify SEO metadata and sitemap`
-spec [0010](../specs/0010-seo-metadata-and-sitemap.md)
+spec [0010](../specs/0010-seo-metadata-and-sitemap.md) · code in `src/features/seo/`, `src/routes/sitemap[.]xml.ts`, `src/routes/robots[.]txt.ts`, `src/start.ts`, `src/routes/index.tsx`, `src/routes/skills.$slug.tsx`, `src/db/queries.ts`
 
 ### 9. Cookie notice and legal pages · needs a decision
 A consent notice for the analytics cookies, and simple privacy and terms pages.

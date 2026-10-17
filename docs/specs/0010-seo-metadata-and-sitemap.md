@@ -1,7 +1,7 @@
 # 0010. Give every public page its own metadata, and serve a sitemap and a robots file
 
 **Date**: 2026-10-16
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -224,18 +224,18 @@ Rate limiting is consciously not added, for the reason in `## Rationale`. Revisi
 
 ## Build plan
 
-1. Prove the server route pipe: add `src/routes/sitemap[.]xml.ts` and `src/routes/robots[.]txt.ts` with a `GET` handler each, answering the right content type, the sitemap carrying the home address alone, built from the development fallback address for now, and the robots file carrying the disallow group and a `Sitemap:` line, then run `npm run generate-routes` and confirm both by request, satisfies **AC-6**, **AC-10**
-2. Add `src/features/seo/site.ts`: the site address normalized and validated, the absolute address builder, and the host comparison, with the startup check and the `.env.example` line, satisfies **AC-14**
-3. Add `src/features/seo/meta.ts`: the pure head fragment builders and the copy list above, satisfies **AC-1**, **AC-5**, **AC-12**, **AC-13**
-4. Put the home page's title and description end to end through the real request path and confirm both in the server rendered HTML, satisfies **AC-1**
-5. Give `/skills/$slug` a head fed from the detail query's cached result in the match context, with the guard for a skill that is not there and the social tags, satisfies **AC-2**, **AC-12**
-6. Finish the home page's canonical rule: a self referencing canonical with no filter set, and no canonical plus `noindex` while a filter is set, satisfies **AC-5**
-7. Thicken the sitemap: the published entries read through the shared visibility rule, the date only `lastmod` on skill entries, the cache header, and the 503 path when the read fails, satisfies **AC-6**, **AC-7**, **AC-8**, **AC-9**
-8. Add `src/features/seo/indexing.ts` and the one middleware rule that reads it: the noindex header on the private paths and on a page that was not found, including the redirect those routes answer with, satisfies **AC-3**, **AC-4**
-9. Emit the structured data on skill pages from the loaded skill, satisfies **AC-13**
-10. Finish the robots file against the shared path list, with the cache directives and `Vary: Host`, satisfies **AC-10**
-11. Add the host rule: the noindex header on a host that is not the site, the disallow everything branch, and keeping a session cookie off both crawl responses, satisfies **AC-9**, **AC-11**
-12. The crawl and quality pass: run `npm run generate-routes`, `npm run check`, and `npm run typecheck`, build and preview, then walk the scenarios above on both a production host and a local one, including the empty catalogue case, satisfies **AC-1** through **AC-14**
+1. [x] Prove the server route pipe: add `src/routes/sitemap[.]xml.ts` and `src/routes/robots[.]txt.ts` with a `GET` handler each, answering the right content type, the sitemap carrying the home address alone, built from the development fallback address for now, and the robots file carrying the disallow group and a `Sitemap:` line, then run `npm run generate-routes` and confirm both by request, satisfies **AC-6**, **AC-10**
+2. [x] Add `src/features/seo/site.ts`: the site address normalized and validated, the absolute address builder, and the host comparison, with the startup check and the `.env.example` line, satisfies **AC-14**
+3. [x] Add `src/features/seo/meta.ts`: the pure head fragment builders and the copy list above, satisfies **AC-1**, **AC-5**, **AC-12**, **AC-13**
+4. [x] Put the home page's title and description end to end through the real request path and confirm both in the server rendered HTML, satisfies **AC-1**
+5. [x] Give `/skills/$slug` a head fed from the detail query's cached result in the match context, with the guard for a skill that is not there and the social tags, satisfies **AC-2**, **AC-12**
+6. [x] Finish the home page's canonical rule: a self referencing canonical with no filter set, and no canonical plus `noindex` while a filter is set, satisfies **AC-5**
+7. [x] Thicken the sitemap: the published entries read through the shared visibility rule, the date only `lastmod` on skill entries, the cache header, and the 503 path when the read fails, satisfies **AC-6**, **AC-7**, **AC-8**, **AC-9**
+8. [x] Add `src/features/seo/indexing.ts` and the one middleware rule that reads it: the noindex header on the private paths and on a page that was not found, including the redirect those routes answer with, satisfies **AC-3**, **AC-4**
+9. [x] Emit the structured data on skill pages from the loaded skill, satisfies **AC-13**
+10. [x] Finish the robots file against the shared path list, with the cache directives and `Vary: Host`, satisfies **AC-10**
+11. [x] Add the host rule: the noindex header on a host that is not the site, the disallow everything branch, and keeping a session cookie off both crawl responses, satisfies **AC-9**, **AC-11**
+12. [x] The crawl and quality pass: run `npm run generate-routes`, `npm run check`, and `npm run typecheck`, build and preview, then walk the scenarios above on both a production host and a local one, including the empty catalogue case, satisfies **AC-1** through **AC-14**
 
 ## Consequences
 
